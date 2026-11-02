@@ -1,7 +1,17 @@
 // Catálogo de juegos. Para añadir uno nuevo:
-// 1) crea la carpeta games/<id>/ con su index.html
+// 1) guarda el juego como <id>.html en la raíz (junto a este archivo)
 // 2) añade un objeto a esta lista. Nada más.
 window.GAMES = [
+  {
+    id: 'saltation',
+    name: 'Cuerda de Acero',
+    emoji: '🪢',
+    tags: ['3D', 'Ritmo', 'Tienda'],
+    desc: 'Salta la cuerda de cable de grúa en Puerto Hierro. Cada salto limpio te hace más fuerte; desbloquea cuerdas y skins.',
+    controls: 'Espacio o toque para saltar · mantén para salto alto',
+    colors: ['#f4c20d', '#d8512f'],
+    badge: 'Nuevo'
+  },
   {
     id: 'fuga-3d',
     name: 'FUGA 3D',
