@@ -1,5 +1,5 @@
 // Catálogo de juegos. Para añadir uno nuevo:
-// 1) guarda el juego como <id>.html en la raíz (junto a este archivo)
+// 1) crea la carpeta games/<id>/ con su index.html
 // 2) añade un objeto a esta lista. Nada más.
 window.GAMES = [
   {
