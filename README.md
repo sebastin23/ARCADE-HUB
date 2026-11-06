@@ -1,2 +1,2 @@
-# LINKKK
-https://sebastin23.github.io/ARCADE-HUB/
+# survival-shooter link
+https://sebastin23.github.io/survival-shooter/
