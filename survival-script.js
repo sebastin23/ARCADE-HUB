@@ -2390,6 +2390,7 @@ function togglePause() {
     pauseMenu.style.display = game.paused ? 'flex' : 'none';
     if (game.paused) {
         game.gamepad.menuSelectionIndex = 0;
+        try { populateInventory(); } catch (e) { console.warn('Inventario:', e); }
     }
 }
 
