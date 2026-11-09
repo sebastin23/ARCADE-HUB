@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Demolición 3D</title>
+<title>Pelotation — Demolición de cajas</title>
 <style>
 :root{--bg:rgba(255,255,255,.78);--fg:#14202b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:rgba(15,20,28,.78);--fg:#eef3f8}}
@@ -11,10 +11,11 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #hud{position:fixed;left:12px;top:calc(12px + env(safe-area-inset-top,0px));background:var(--bg);color:var(--fg);padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.5;max-width:260px}
 #hud b{font-size:18px}
 #cross{position:fixed;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border:2px solid #fff;border-radius:50%;mix-blend-mode:difference;pointer-events:none}
+#msg{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(10,15,25,.85);color:#fff;padding:18px 26px;border-radius:12px;font-size:20px;text-align:center;display:none;pointer-events:none}
 </style></head><body>
-<canvas id="c"></canvas><div id="cross"></div>
+<canvas id="c"></canvas><div id="cross"></div><div id="msg"></div>
 <div id="hud"><b id="score">0 / 0</b> cajas derribadas<br>
-WASD mover · ratón mirar (clic para capturar)<br>Clic / Espacio: disparar · R: reiniciar<br>Flechas: mirar si no hay ratón</div>
+WASD mover · ratón mirar (clic para capturar)<br>Clic / Espacio: disparar · R: reiniciar<br>Flechas: mirar · N: siguiente nivel<br>Derriba el 85% con 14 bolas · Móvil: izq. mover, der. mirar/tocar disparar</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 <script>
@@ -94,15 +95,24 @@ function wall(x,z,w,h){
 function pyramid(x,z,n){
   for(let r=0;r<n;r++)for(let c=0;c<n-r;c++)addCrate(x+(c-(n-r)/2)*1.02,.5+r*1.001,z);
 }
+let level=1,ammo=0,state='play';const touchMove={f:0,s:0};
+const layouts=[
+ ()=>{wall(0,-14,7,6);pyramid(-11,-8,6);pyramid(11,-8,6);wall(0,-24,9,4);},
+ ()=>{wall(-8,-14,6,7);wall(8,-14,6,7);pyramid(0,-8,7);wall(0,-26,11,3);},
+ ()=>{pyramid(-14,-10,8);pyramid(14,-10,8);wall(0,-16,9,8);wall(0,-28,13,5);pyramid(0,-6,5);}
+];
+function msg(h){const m=document.getElementById('msg');m.innerHTML=h||'';m.style.display=h?'block':'none';}
 function build(){
+  state='play';msg('');ammo=14;
   crates.forEach(o=>{scene.remove(o.mesh);world.removeBody(o.body)});crates=[];
   balls.forEach(o=>{scene.remove(o.mesh);world.removeBody(o.body)});balls=[];
-  wall(0,-14,7,6);pyramid(-11,-8,6);pyramid(11,-8,6);wall(0,-24,9,4);
+  layouts[(level-1)%layouts.length]();if(level>3)wall(0,-34,9,level-2);
   document.getElementById('score').textContent='0 / '+crates.length;
 }
 build();
 
 function shoot(){
+  if(state!=='play'||ammo<=0)return;ammo--;
   const dir=new THREE.Vector3();camera.getWorldDirection(dir);
   const p=camera.position.clone().addScaledVector(dir,1);
   const mesh=new THREE.Mesh(ballGeo,ballMat);mesh.castShadow=true;scene.add(mesh);
@@ -114,8 +124,9 @@ function shoot(){
 
 // Controles
 let yaw=0,pitch=-.05;const pos=new THREE.Vector3(0,1.7,12);const keys={};
-addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'){shoot();e.preventDefault();}if(e.code==='KeyR')build();});
+addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'){shoot();e.preventDefault();}if(e.code==='KeyR')build();if(e.code==='KeyN'&&state==='win'){level++;build();}});
 addEventListener('keyup',e=>keys[e.code]=false);
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;touchMove.f=touchMove.s=0;});
 addEventListener('mousemove',e=>{
   if(document.pointerLockElement===canvas||e.buttons===2){yaw-=e.movementX*.0025;pitch=Math.max(-1.4,Math.min(1.4,pitch-e.movementY*.0025));}
 });
@@ -125,6 +136,14 @@ canvas.addEventListener('mousedown',e=>{
   if(document.pointerLockElement!==canvas){try{canvas.requestPointerLock();}catch(_){}}
   shoot();
 });
+const clampP=v=>Math.max(-1.4,Math.min(1.4,v));let tl=null,tr=null;
+addEventListener('touchstart',e=>{for(const t of e.changedTouches){const o={id:t.identifier,x:t.clientX,y:t.clientY,lx:t.clientX,ly:t.clientY,moved:0};if(t.clientX<innerWidth/2)tl=o;else tr=o;}if(state==='win'){level++;build();}else if(state==='lose')build();},{passive:true});
+addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){
+  if(tl&&t.identifier===tl.id){touchMove.f=Math.max(-1,Math.min(1,(tl.y-t.clientY)/50));touchMove.s=Math.max(-1,Math.min(1,(t.clientX-tl.x)/50));}
+  else if(tr&&t.identifier===tr.id){yaw-=(t.clientX-tr.lx)*.005;pitch=clampP(pitch-(t.clientY-tr.ly)*.005);tr.moved+=Math.abs(t.clientX-tr.lx)+Math.abs(t.clientY-tr.ly);tr.lx=t.clientX;tr.ly=t.clientY;}}},{passive:false});
+addEventListener('touchend',e=>{for(const t of e.changedTouches){
+  if(tl&&t.identifier===tl.id){tl=null;touchMove.f=touchMove.s=0;}
+  else if(tr&&t.identifier===tr.id){if(tr.moved<12)shoot();tr=null;}}});
 function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
 addEventListener('resize',resize);resize();
 
@@ -135,9 +154,11 @@ function loop(){
   const dt=Math.min(clock.getDelta(),.05);
   if(keys.ArrowLeft)yaw+=dt*1.8;if(keys.ArrowRight)yaw-=dt*1.8;
   if(keys.ArrowUp)pitch=Math.min(1.4,pitch+dt*1.5);if(keys.ArrowDown)pitch=Math.max(-1.4,pitch-dt*1.5);
-  const f=(keys.KeyW?1:0)-(keys.KeyS?1:0),s=(keys.KeyD?1:0)-(keys.KeyA?1:0),v=(keys.ShiftLeft?10:6)*dt;
+  const f=(keys.KeyW?1:0)-(keys.KeyS?1:0)+touchMove.f,s=(keys.KeyD?1:0)-(keys.KeyA?1:0)+touchMove.s,v=(keys.ShiftLeft?10:6)*dt;
   pos.x+=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*v;pos.z+=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*v;
   pos.x=Math.max(-45,Math.min(45,pos.x));pos.z=Math.max(-45,Math.min(45,pos.z));
+  for(const o of crates){const q=o.body.position;if(q.y>2.2)continue;const dx=pos.x-q.x,dz=pos.z-q.z,r=.85;
+    if(Math.abs(dx)<r&&Math.abs(dz)<r){if(Math.abs(dx)>Math.abs(dz))pos.x=q.x+(dx<0?-r:r);else pos.z=q.z+(dz<0?-r:r);}}
   camera.position.copy(pos);camera.rotation.set(pitch,yaw,0);
 
   world.step(1/60,dt,4);
@@ -147,7 +168,12 @@ function loop(){
     if(o.body.position.distanceTo(o.start)>1.3)down++;
   }
   for(const o of balls){o.mesh.position.copy(o.body.position);o.mesh.quaternion.copy(o.body.quaternion);}
-  document.getElementById('score').textContent=down+' / '+crates.length;
+  document.getElementById('score').textContent='Nv '+level+' · '+down+' / '+crates.length+' · 🔴 '+ammo;
+  if(state==='play'){
+    const calm=crates.every(o=>o.body.velocity.lengthSquared()<.05)&&balls.every(b=>b.body.velocity.lengthSquared()<.25);
+    if(down>=Math.ceil(crates.length*.85)){state='win';msg('¡Nivel '+level+' superado!<br><small>Pulsa N o toca la pantalla para el siguiente</small>');}
+    else if(ammo<=0&&calm){state='lose';msg('Sin bolas<br><small>Pulsa R o toca la pantalla para reintentar</small>');}
+  }
   renderer.render(scene,camera);
 }
 loop();
