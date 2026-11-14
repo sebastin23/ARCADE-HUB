@@ -47,8 +47,8 @@ window.GAMES = [
     name: 'Neón Buggy Infinito',
     emoji: '🏎️',
     tags: ['3D', 'Conducción', 'Arcade'],
-    desc: 'Carretera infinita en plena noche neón. Recoge monedas, rompe cajas, salta rampas y esquiva muros. Garaje con coches y Pase Neón con recompensas.',
-    controls: 'A/D girar · W turbo · S frenar · Espacio voltereta en el aire · botones en móvil',
+    desc: 'Carretera infinita y realista que cambia de ciudad: Vitoria, Bilbao, San Sebastián, Madrid… Pasos de cebra con abuelitas, barreras de obra, rampas, garaje y Pase Neón. ¡Con turbo infinito!',
+    controls: 'A/D girar · W turbo ∞ · S frenar · Espacio voltereta en el aire · botones en móvil',
     colors: ['#ff2bd6', '#19f2ff'],
     badge: 'Nuevo'
   },
