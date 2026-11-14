@@ -107,6 +107,8 @@ body.cn .hud,body.cn .foot,body.cn #hint{display:none}
 .tr.dn .bx{opacity:.55}.ck{position:absolute;top:-10px;left:-8px;text-decoration:none;background:#3ddc3a;color:#fff;border-radius:50%;width:24px;height:24px;font-size:15px;line-height:24px;border:2px solid var(--navy)}
 .ic{font-size:36px}.tn{font-size:15px}.tr small{font:11px system-ui,sans-serif;opacity:.85;line-height:1.1}.st{margin-top:auto;font-size:12px;color:#ffe14a}
 .tr.cl .bx{animation:cl .5s forwards}@keyframes cl{50%{transform:scale(1.25) rotate(-4deg);box-shadow:0 0 40px #fff}to{transform:scale(.9);opacity:.5}}
+#adm{position:fixed;top:calc(env(safe-area-inset-top,0px) + 70px);right:10px;z-index:20;display:none;width:230px;background:rgba(10,8,30,.92);border:3px solid #ff2bd6;border-radius:12px;padding:12px 14px;font:14px system-ui,sans-serif;color:#fff;box-shadow:0 0 24px rgba(255,43,214,.5)}
+#adm.on{display:block}#adm h4{margin:0 0 8px;font:400 18px var(--ln);color:#19f2ff;letter-spacing:1px}#adm label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0}#adm input[type=range]{width:100%;accent-color:#ff2bd6}#adm button{width:100%;margin-top:8px;padding:7px;border:0;border-radius:8px;background:#19f2ff;color:#000;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
@@ -122,13 +124,14 @@ body.cn .hud,body.cn .foot,body.cn #hint{display:none}
 </div>
 <div id="over"><div class="panel" id="pn"></div></div>
 <div id='lb' class='hide'><div class='lt'><div class='prof'><div class='av'>🏎️<b id='lvl'>1</b></div><div><div class='pn'>PILOTO</div><div class='xb'><i id='xpb'></i></div></div></div><div class='pill'>🏆 <span id='trp'>0</span></div><div class='sp'></div><div class='pill'>🪙 <span id='lco'>0</span><button class='plus' id='lplus'>+</button></div><button class='rb' id='lhelp'>?</button></div><div class='lside'><button class='sb' id='lpass'>🎟️<span>PASE</span><i class='dot' id='pdot'></i></button><button class='sb' id='lgar'>🚗<span>GARAJE</span></button></div><div class='lcar'><button class='ar' id='lpv'>◀</button><div><div class='cn' id='lcn'>SOLAR</div><div class='cp' id='lcp'></div></div><button class='ar' id='lnx'>▶</button></div><div class='lplay'><div class='mode'>CARRERA INFINITA</div><button id='lgo'>JUGAR</button></div></div>
+<div id="adm"><h4>🛠 PANEL ADMIN</h4><label><span>Coche invencible</span><input type="checkbox" id="ainv"></label><label><span>Velocidad</span><b id="aval">x1.0</b></label><input type="range" id="aspd" min="0.2" max="3" step="0.1" value="1"><button id="arst">Restablecer</button><button id="acls">Cerrar</button></div>
 <div id="cine"><div class="b t"></div><div class="b u"></div><div id="alr"></div><div id="cap"></div></div><div id="rain"></div><div id="fade"></div>
 <div id="ld"><h1>NEÓN BUGGY<br>INFINITO</h1><div class="lb"><i id="lbi"></i></div><p id="lt">Cargando…</p></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id),V3=THREE.Vector3,rr=(a,b)=>a+Math.random()*(b-a);
-let best=0;try{best=+localStorage.getItem('nb_inf')||0}catch(e){}
+const admin={inv:false,spd:1};let best=0;try{best=+localStorage.getItem('nb_inf')||0}catch(e){}
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let wallet=ls.get('nb_w',0),own=ls.get('nb_own',[0]),sel=ls.get('nb_sel',0),xp=ls.get('nb_xp',0),claimed=ls.get('nb_cl2',[]),gi=0,pw=[],enemies=[],eT=3;
 const save=()=>{ls.set('nb_w',wallet);ls.set('nb_own',own);ls.set('nb_sel',sel);ls.set('nb_xp',xp);ls.set('nb_cl2',claimed)};
@@ -317,7 +320,7 @@ function hit(o){const p=new V3(o.x,.8,o.z);
   if(o.t==='crate'){smash(o);bonus+=25;if(!CP.fan)speed*=.94;shake=Math.max(shake,.25);snd(190,.1,'triangle',.08,-100)}
   else if(o.t==='barrel'){smash(o,20);bonus+=50;burst(p,24,0xffd23a,14);burst(p,14,0xff2b4a,10);for(const q of objs)if(!q.dead&&q.k==='o'&&q.t!=='wall'&&q!==o&&Math.hypot(q.x-o.x,q.z-o.z)<5){smash(q);bonus+=25}
     speed*=.85;if(!car.air){car.air=true;car.vy=8;lastVy=0}shake=.8;snd(110,.5,'sawtooth',.2,-80);pop('¡BOOM!')}
-  else if(o.t==='wall'){if(invul>0)return;smash(o,16);burst(p,20,0x19f2ff,12);shake=1.2;snd(80,.4,'sawtooth',.2,-40);if(shields===0){over();return}shields--;invul=CP.fan?2.6:1.8;speed*=.5;if(!car.air){car.air=true;car.vy=7;lastVy=0}}}
+  else if(o.t==='wall'){if(invul>0&&!admin.inv)return;smash(o,16);burst(p,20,0x19f2ff,12);shake=1.2;snd(80,.4,'sawtooth',.2,-40);if(admin.inv)return;if(shields===0){over();return}shields--;invul=CP.fan?2.6:1.8;speed*=.5;if(!car.air){car.air=true;car.vy=7;lastVy=0}}}
 function land(gh){const imp=-car.vy,tw=Math.PI*2;car.y=gh;car.air=false;car.vy=0;lastVy=0;
   if(car.flip>.6){const r=car.flip%tw,dd=Math.min(r,tw-r),n=Math.round(car.flip/tw);
     if(dd<1&&n>=1){const p=300*n;bonus+=p;nitro=Math.min(100,nitro+25);pop('¡VOLTERETA x'+n+'! +'+p);snd(500,.3,'square',.06,700)}
@@ -335,7 +338,7 @@ function frame(){requestAnimationFrame(frame);const dt=Math.min(clk.getDelta(),.
   if(st==='play'){
     const sIn=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0),nitOn=!!(keys.KeyW||keys.ArrowUp),brake=keys.KeyS||keys.ArrowDown;
     nitro=100;
-    const tgt=26+(CP.spd||0)+Math.min(22,dist/100)+(nitOn?16:0)-(brake?12:0);speed+=(tgt-speed)*Math.min(1,dt*(tgt>speed?1.1:2.5));
+    const tgt=(26+(CP.spd||0)+Math.min(22,dist/100)+(nitOn?16:0)-(brake?12:0))*admin.spd;speed+=(tgt-speed)*Math.min(1,dt*(tgt>speed?1.1:2.5));
     car.vx+=(sIn*(CP.steer||1)*(car.air?11:17)*(.7+speed/90)-car.vx)*Math.min(1,dt*7);car.x+=car.vx*dt;if(Math.abs(car.x)>13.2){car.x=Math.sign(car.x)*13.2;car.vx*=-.3;shake=Math.max(shake,.1)}
     car.z-=speed*dt;dist=-car.z;invul=Math.max(0,invul-dt);
     /* vertical */
@@ -361,7 +364,7 @@ function frame(){requestAnimationFrame(frame);const dt=Math.min(clk.getDelta(),.
   /* movimiento visual del coche */
   if(st!=='end'||true){car3.position.set(car.x,car.y,car.z);
     const gF=gH(car.x,car.z-1.8),gB=gH(car.x,car.z+1.8),tp=car.air?Math.atan2(car.vy,Math.max(speed,10))*.8:Math.atan2(gF-gB,3.6);car.pv+=(tp-car.pv)*Math.min(1,dt*10);
-    car3.rotation.set(car.pv+car.flip,0,-car.vx*.012);car3.visible=invul<=0||Math.floor(t*12)%2===0;
+    car3.rotation.set(car.pv+car.flip,0,-car.vx*.012);car3.visible=admin.inv||invul<=0||Math.floor(t*12)%2===0;
     if(st==='play')spin-=speed*dt/.55;pw.forEach((w,i)=>w.rotation.set(spin,i<2?-car.vx*.025:0,0))}
   /* mundo */
   ground.position.z=Math.round(car.z/4)*4;road.position.z=Math.round(car.z/8)*8;rails.forEach(r=>r.position.z=car.z);
@@ -410,7 +413,7 @@ const ENC=[[0x4a6bff,0xffd23a],[0x9a2bff,0x19f2ff],[0xff8a1a,0x111133]];
 function spawnEnemy(){const ag=Math.random()<.35+Math.min(.3,dist/3000),col=ag?[0xff1a1a,0x000000]:ENC[Math.random()*3|0],g=new THREE.Group(),ws=buildCar(g,{c1:col[0],c2:col[1],shape:Math.random()<.5?0:2}),x=[-9,-3,3,9][Math.random()*4|0]+rr(-1,1),z=car.z-rr(110,150);g.position.set(x,0,z);S.add(g);enemies.push({g,ws,x,z,v:ag?speed*.78:rr(13,20),ag,ph:rr(0,6),dead:false})}
 function toDebris(e,vz){e.dead=true;debris.push({m:e.g,v:new V3(rr(-6,6),rr(7,12),vz),w:new V3(rr(-6,6),rr(-6,6),rr(-6,6)),l:2.5})}
 function stomp(e,gy){toDebris(e,-e.v);car.air=true;car.vy=11;lastVy=0;airT=0;bonus+=150;pop('¡APLASTADO! +150');burst(new V3(e.x,gy+1,e.z),18,0xffd23a,10);snd(300,.2,'square',.07,400);shake=.4}
-function hitEnemy(e){toDebris(e,-speed*rr(.9,1.2));const p=new V3(e.x,1,e.z);burst(p,22,0xff6a1a,12);burst(p,10,0xffd23a,10);shake=1.1;snd(90,.4,'sawtooth',.2,-50);if(shields===0){over();return}shields--;invul=CP.fan?2.6:1.8;speed*=.55;if(!car.air){car.air=true;car.vy=6;lastVy=0}}
+function hitEnemy(e){toDebris(e,-speed*rr(.9,1.2));const p=new V3(e.x,1,e.z);burst(p,22,0xff6a1a,12);burst(p,10,0xffd23a,10);shake=1.1;snd(90,.4,'sawtooth',.2,-50);if(admin.inv)return;if(shields===0){over();return}shields--;invul=CP.fan?2.6:1.8;speed*=.55;if(!car.air){car.air=true;car.vy=6;lastVy=0}}
 function updEnemies(dt,t){eT-=dt;if(eT<=0&&enemies.length<5){spawnEnemy();eT=Math.max(2,5.5-dist/500)+rr(0,2)}
  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];if(e.dead){enemies.splice(i,1);continue}
   e.z-=e.v*dt;if(e.ag&&e.z>car.z-55&&e.z<car.z+8)e.x+=Math.sign(car.x-e.x)*Math.min(Math.abs(car.x-e.x),5*dt);else e.x+=Math.sin(t*.8+e.ph)*1.5*dt;
@@ -433,6 +436,11 @@ function menu(){lobby()}
 function cyc(d){let i=sel;do{i=(i+d+CARS.length)%CARS.length}while(!own.includes(i)&&i!==sel);sel=i;save();lobby()}
 function help(){panel(`<h1>CÓMO SE JUEGA</h1><p>La carretera es infinita. Recoge monedas, rompe cajas, salta rampas y esquiva muros.</p><p>A/D girar · W turbo ∞ · S frenar · ESPACIO voltereta en el aire. En móvil usa los botones.</p><p>¡Cae encima de los coches rivales para aplastarlos! Respeta los pasos de cebra: cuidado con las abuelitas.</p><button class='go' id='bk'>ENTENDIDO</button>`);$('bk').onclick=menu}
 $('lgo').onclick=load;$('lgar').onclick=$('lplus').onclick=()=>{gi=sel;garage()};$('lpass').onclick=passUI;$('lhelp').onclick=help;$('lpv').onclick=()=>cyc(-1);$('lnx').onclick=()=>cyc(1);
+/* panel admin: código Konami */
+{const K=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','KeyB','KeyA'];let ki=0;const pn=$('adm'),sl=$('aspd'),ck=$('ainv');
+ const sync=()=>{admin.spd=+sl.value;admin.inv=ck.checked;$('aval').textContent='x'+admin.spd.toFixed(1)};
+ sl.oninput=ck.onchange=sync;$('arst').onclick=()=>{sl.value=1;ck.checked=false;sync()};$('acls').onclick=()=>pn.classList.remove('on');
+ addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'&&e.target.type==='range'&&e.code.startsWith('Arrow'))return;ki=e.code===K[ki]?ki+1:(e.code===K[0]?1:0);if(ki===K.length){ki=0;pn.classList.toggle('on');snd(660,.25,'square',.06,400)}})}
 pw=buildCar(car3,CP);resetWorld();loadScreen();frame();
 </script>
 </body>
