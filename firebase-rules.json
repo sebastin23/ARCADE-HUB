@@ -1,0 +1,75 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "names": {
+      "$n": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.val() === auth.uid",
+        ".validate": "$n.matches(/^[a-z0-9_]{3,14}$/)"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "name": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === $uid && !data.exists()",
+          ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_]{3,14}$/) && root.child('names').child(newData.val().toLowerCase()).val() === $uid"
+        },
+        "friends": {
+          ".write": "auth != null && auth.uid === $uid",
+          "$f": {
+            ".validate": "newData.isString() && newData.val().length <= 14"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "daily": {
+      "$day": {
+        ".read": "auth != null",
+        ".indexOn": ["d", "g"],
+        ".validate": "$day.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['n', 'd', 'g'])",
+          "n": {
+            ".validate": "newData.isString() && newData.val() === root.child('users').child($uid).child('name').val()"
+          },
+          "d": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 30000 && newData.val() >= (data.exists() ? data.val() : 0)"
+          },
+          "g": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20000 && newData.val() >= (data.exists() ? data.val() : 0)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "alltime": {
+      ".read": "auth != null",
+      ".indexOn": ["d", "g"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['n', 'd', 'g'])",
+        "n": {
+          ".validate": "newData.isString() && newData.val() === root.child('users').child($uid).child('name').val()"
+        },
+        "d": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 30000 && newData.val() >= (data.exists() ? data.val() : 0)"
+        },
+        "g": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20000 && newData.val() >= (data.exists() ? data.val() : 0)"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}
