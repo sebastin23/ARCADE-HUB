@@ -203,7 +203,7 @@ function purge(c){c.meshes.forEach(m=>S.remove(m));objs=objs.filter(o=>o.c!==c);
 /* ---------- zonas, ciudades y realismo ---------- */
 const ZC=40,C3=h=>new THREE.Color(h);
 const ZONES=[
-{n:'VILLAPEÑA',k:'ciudad',g:0x6f8f4a,t:0x4f9be8,b:0xd2e8f8,lf:0x2f6e2a,li:1},
+{n:'VILLAPENE',k:'ciudad',g:0x6f8f4a,t:0x4f9be8,b:0xd2e8f8,lf:0x2f6e2a,li:1},
 {n:'BURGOS',k:'campo',g:0xb9a74f,t:0x78aee0,b:0xf2e6bf,lf:0x7a8a3a,li:1.05},
 {n:'MADRID',k:'ciudad',g:0x7a7a7e,t:0x3d4f86,b:0xf7ac6e,lf:0x4a7a3a,li:.8},
 {n:'CUENCA',k:'campo',g:0x8a9a52,t:0x5aa0e0,b:0xe6efd8,lf:0x3f7a3a,li:1},
@@ -292,7 +292,7 @@ function cineTick(dt,t){if(!cn)return;cn.t+=dt;const q=cn.s[cn.i];if(q.f)q.f(Mat
  if(cn.t>=q.d){if(q.e)q.e();cn.i++;cn.t=0;if(cn.i>=cn.s.length){const d=cn.done;cn=null;$('cine').classList.remove('on');document.body.classList.remove('cn');if(d)d();return}cineShow()}}
 addEventListener('pointerdown',()=>{if(cn)cn.t=99});addEventListener('keydown',e=>{if(cn&&(e.code==='Space'||e.code==='Enter'))cn.t=99});
 const orb=(r,h,sp)=>(p,dt,t)=>{cam.position.set(car.x+Math.sin(t*sp)*r,h,car.z+Math.cos(t*sp)*r);cam.lookAt(car.x,1.5,car.z)};
-function introCine(){cine([{d:3.2,txt:'Villapeña, 07:42. Un día tranquilo… o eso parecía.',f:orb(9,2.5,.5)},
+function introCine(){cine([{d:3.2,txt:'Villapene, 07:42. Un día tranquilo… o eso parecía.',f:orb(9,2.5,.5)},
  {d:3.4,txt:'¡Un monstruo gigante está destrozando el pueblo!',f:()=>{cam.position.set(car.x+10,6,car.z+14);cam.lookAt(mon.position.x,18,mon.position.z);shake=.2}},
  {d:2,txt:'¡Pisa a fondo y escapa!',f:orb(6,2,.9)}],()=>{st='play'})}
 function warp(gz){const nd=(gz+1)*ZC*L;chunks.forEach(purge);chunks=[];objs=[];ramps=[];walkers=[];blds=[];debris.forEach(d=>S.remove(d.m));debris=[];enemies.forEach(e=>S.remove(e.g));enemies=[];car.z=-nd;car.y=0;car.air=false;car.vy=0;dist=nd;nextC=Math.floor(nd/L);while(nextC*L<nd+230)genChunk(nextC++);flood.visible=false;rainOn(0);zoneSet((gz+1)%ZONES.length);lastZi=-1}
