@@ -47,7 +47,7 @@ window.GAMES = [
     name: 'Neón Buggy Infinito',
     emoji: '🏎️',
     tags: ['3D', 'Conducción', 'Arcade'],
-    desc: 'Carretera infinita y realista que cambia de ciudad: Vitoria, Bilbao, San Sebastián, Madrid… Pasos de cebra con abuelitas, barreras de obra, rampas, garaje y Pase Neón. ¡Con turbo infinito!',
+    desc: 'Viaja desde Villapeña huyendo de un monstruo gigante: Burgos, Madrid, Valencia (¡DANA!) y Marruecos. Pasos de cebra, abuelitas, cinemáticas, garaje y Pase Neón. ¡Turbo infinito!',
     controls: 'A/D girar · W turbo ∞ · S frenar · Espacio voltereta en el aire · botones en móvil',
     colors: ['#ff2bd6', '#19f2ff'],
     badge: 'Nuevo'
