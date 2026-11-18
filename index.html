@@ -71,6 +71,18 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
 .card.off:hover .em{transform:none}
 .badge.off{background:#8a93a8;color:#111}
 .btn:disabled{background:#3a4258;color:#9aa7c7;box-shadow:none;cursor:not-allowed;transform:none}
+/* Anuncios laterales (solo pantallas anchas, solo si aceptó cookies, nunca en partida) */
+.adrail{display:none;position:fixed;top:150px;width:150px;z-index:5}
+.adrail.l{left:calc(50% - 566px - 162px)}
+.adrail.r{left:calc(50% + 566px + 12px)}
+.adrail small{display:block;text-align:center;font-size:10px;letter-spacing:1.5px;color:var(--mut);margin-bottom:4px;text-transform:uppercase}
+.adrail a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:300px;padding:14px 10px;border-radius:14px;border:1px solid var(--bd);background:linear-gradient(160deg,rgba(255,59,92,.16),rgba(255,197,58,.10));color:var(--fg);text-decoration:none;text-align:center;transition:.2s}
+.adrail a:hover,.adrail a:focus-visible{border-color:var(--go);transform:translateY(-3px);outline:none}
+.adrail .ad-em{font-size:40px}
+.adrail .ad-t{font-size:14px;font-weight:800}
+.adrail .ad-s{font-size:11px;color:var(--mut);line-height:1.4}
+.adrail .ad-go{background:linear-gradient(135deg,var(--ac),#ff7a3a);color:#fff;font-weight:800;font-size:13px;padding:7px 16px;border-radius:999px}
+@media (min-width:1480px){body.ads-ok:not(.playing) .adrail{display:block}}
 /* Banner de cookies */
 #ck[hidden]{display:none}
 #ck{position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#0f1426;color:#f4f7fb;border-top:1px solid rgba(255,255,255,.18);box-shadow:0 -6px 24px rgba(0,0,0,.5);padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
@@ -107,6 +119,10 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
   <div id="tab"><button id="bk" title="Volver a la lista">← Juegos</button><button id="rl" title="Reiniciar el juego">↻</button><button id="fs" title="Pantalla completa">⛶</button></div>
 </div>
 
+<!-- ANUNCIOS LATERALES (se muestran solo con cookies aceptadas, en pantallas anchas y fuera de partida) -->
+<aside class="adrail l" aria-label="Publicidad"><small>Publicidad</small><a target="_blank" rel="sponsored nofollow noopener"><span class="ad-em">🎁</span><span class="ad-t">Oferta patrocinada</span><span class="ad-s">Se abre una web externa</span><span class="ad-go">Ver →</span></a></aside>
+<aside class="adrail r" aria-label="Publicidad"><small>Publicidad</small><a target="_blank" rel="sponsored nofollow noopener"><span class="ad-em">🎁</span><span class="ad-t">Oferta patrocinada</span><span class="ad-s">Se abre una web externa</span><span class="ad-go">Ver →</span></a></aside>
+
 <!-- BANNER DE COOKIES (Aceptar y Rechazar al mismo nivel; la publicidad NO carga hasta aceptar) -->
 <div id="ck" role="dialog" aria-labelledby="ck-t" hidden>
   <div class="ck-in">
@@ -128,6 +144,7 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
      Si su código tiene la forma:  script src="//ejemplo.com/abc.js" data-zone="123456" async
      entonces pon:  src: '//ejemplo.com/abc.js',  attrs: {'data-zone':'123456'}
      Mientras src esté vacío no se carga ningún anuncio. */
+  const SIDE_AD_URL = 'https://uplcm.com/4/12292495'; // Direct Link de Monetag para los laterales
   const ADS = { src: 'https://n6wxm.com/vignette.min.js', attrs: {'data-zone':'12292386'} };
 
   const KEY='arcadehub.consent.v1', MAX=730*24*3600*1000; // el consentimiento se renueva cada 24 meses
@@ -141,6 +158,10 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
 
   let loaded=false;
   let consent=read();
+  const rails=()=>{
+    document.body.classList.toggle('ads-ok',consent==='yes');
+    document.querySelectorAll('.adrail a').forEach(a=>{consent==='yes'?a.setAttribute('href',SIDE_AD_URL):a.removeAttribute('href')});
+  };
   let inGame=/^#\/.+/.test(location.hash); // true mientras hay una partida abierta
   function loadAds(){
     if(loaded||!ADS.src||inGame)return; // nunca se cargan anuncios durante una partida
@@ -151,10 +172,10 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
     document.head.appendChild(s);
   }
 
-  $('ck-yes').onclick=()=>{write('yes');consent='yes';hide();loadAds()};
+  $('ck-yes').onclick=()=>{write('yes');consent='yes';hide();loadAds();rails()};
   $('ck-no').onclick=()=>{
     const hadAds=loaded;
-    write('no');consent='no';hide();
+    write('no');consent='no';hide();rails();
     if(hadAds)location.reload(); // un script ya cargado no se puede "descargar": recargamos sin él
   };
 
@@ -171,6 +192,7 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
   }
   addEventListener('hashchange',openFromLink);
 
+  rails();
   if(consent==='yes')loadAds();
   else if(consent===null)show();
   openFromLink();
