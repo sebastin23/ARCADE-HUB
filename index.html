@@ -140,8 +140,10 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
   const hide=()=>{$('ck').hidden=true};
 
   let loaded=false;
+  let consent=read();
+  let inGame=/^#\/.+/.test(location.hash); // true mientras hay una partida abierta
   function loadAds(){
-    if(loaded||!ADS.src)return;
+    if(loaded||!ADS.src||inGame)return; // nunca se cargan anuncios durante una partida
     loaded=true;
     const s=document.createElement('script');
     s.src=ADS.src;s.async=true;
@@ -149,12 +151,17 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
     document.head.appendChild(s);
   }
 
-  $('ck-yes').onclick=()=>{write('yes');hide();loadAds()};
+  $('ck-yes').onclick=()=>{write('yes');consent='yes';hide();loadAds()};
   $('ck-no').onclick=()=>{
     const hadAds=loaded;
-    write('no');hide();
+    write('no');consent='no';hide();
     if(hadAds)location.reload(); // un script ya cargado no se puede "descargar": recargamos sin él
   };
+
+  // Al empezar una partida: si había anuncios cargados, se recarga la página SIN ellos.
+  // Al volver a la lista: se vuelven a cargar (si el visitante aceptó).
+  addEventListener('hub:play',()=>{inGame=true;if(loaded)location.reload()});
+  addEventListener('hub:menu',()=>{inGame=false;if(consent==='yes')loadAds()});
 
   function openFromLink(){
     if(location.hash==='#cookies'){
@@ -164,9 +171,8 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
   }
   addEventListener('hashchange',openFromLink);
 
-  const c=read();
-  if(c==='yes')loadAds();
-  else if(c===null)show();
+  if(consent==='yes')loadAds();
+  else if(consent===null)show();
   openFromLink();
 })();
 </script>
@@ -228,6 +234,7 @@ const frame=$('frame'),player=$('player'),tab=$('tab');
 let cur=null,tabT=0;
 const load=u=>{try{frame.contentWindow.location.replace(new URL(u,location.href).href)}catch(e){frame.src=u}};
 function openGame(g){
+  dispatchEvent(new Event('hub:play'));
   cur=g;ST.last=g.id;ST.plays[g.id]=(ST.plays[g.id]||0)+1;save();
   $('le').textContent=g.emoji||'🎮';$('ln').textContent=g.name.toUpperCase();$('ld').classList.remove('off');
   document.title=g.name+' · Arcade Hub';document.body.classList.add('playing');player.classList.add('on');
@@ -236,6 +243,7 @@ function openGame(g){
   tab.classList.add('open');clearTimeout(tabT);tabT=setTimeout(()=>tab.classList.remove('open'),2800);
 }
 function closeGame(){
+  dispatchEvent(new Event('hub:menu'));
   if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
   player.classList.remove('on');document.body.classList.remove('playing');
   frame.onload=null;load('about:blank');cur=null;document.title='Arcade Hub · Mis juegos';grid();
