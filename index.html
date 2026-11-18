@@ -65,25 +65,13 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
 #tab button{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:10px;padding:9px 12px;font-size:15px;cursor:pointer;white-space:nowrap}
 #tab button:hover{background:rgba(255,59,92,.7)}
 #tab:not(.open):not(:hover) button{pointer-events:none}
+.card.off{cursor:not-allowed;opacity:.65;filter:grayscale(.8)}
+.card.off:hover,.card.off:focus-visible{transform:none;border-color:var(--bd);box-shadow:none}
+.card.off:hover .em{transform:none}
+.badge.off{background:#8a93a8;color:#111}
+.btn:disabled{background:#3a4258;color:#9aa7c7;box-shadow:none;cursor:not-allowed;transform:none}
 @media (max-width:520px){.th{height:120px}#q{min-width:0;flex:1}.logo{font-size:26px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-  <!-- BANNER DE COOKIES -->
-<div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; width: 100%; background: #111; color: #fff; padding: 15px; text-align: center; font-family: sans-serif; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;">
-  <span>Este sitio web utiliza cookies para mejorar la experiencia de juego y mostrar anuncios personalizados. Al continuar navegando, aceptas nuestra <a href="politica-privacidad.html" style="color: #00ffcc; text-decoration: underline;">Política de Privacidad</a>.</span>
-  <button onclick="aceptarCookies()" style="background: #00ffcc; color: #000; border: none; padding: 8px 16px; font-weight: bold; border-radius: 5px; cursor: pointer;">Aceptar</button>
-</div>
-
-<script>
-  function aceptarCookies() {
-    localStorage.setItem('cookiesAceptadas', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  // Verifica si el usuario ya las aceptó previamente
-  if (localStorage.getItem('cookiesAceptadas') === 'true') {
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-</script>
 </style>
 </head>
 <body>
@@ -104,6 +92,24 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
   <iframe id="frame" title="Juego" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope" referrerpolicy="no-referrer-when-downgrade"></iframe>
   <div id="tab"><button id="bk" title="Volver a la lista">← Juegos</button><button id="rl" title="Reiniciar el juego">↻</button><button id="fs" title="Pantalla completa">⛶</button></div>
 </div>
+
+  <!-- BANNER DE COOKIES -->
+<div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; width: 100%; background: #111; color: #fff; padding: 15px; text-align: center; font-family: sans-serif; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;">
+  <span>Este sitio web utiliza cookies para mejorar la experiencia de juego y mostrar anuncios personalizados. Al continuar navegando, aceptas nuestra <a href="politica-privacidad.html" style="color: #00ffcc; text-decoration: underline;">Política de Privacidad</a>.</span>
+  <button onclick="aceptarCookies()" style="background: #00ffcc; color: #000; border: none; padding: 8px 16px; font-weight: bold; border-radius: 5px; cursor: pointer;">Aceptar</button>
+</div>
+
+<script>
+  function aceptarCookies() {
+    localStorage.setItem('cookiesAceptadas', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  // Verifica si el usuario ya las aceptó previamente
+  if (localStorage.getItem('cookiesAceptadas') === 'true') {
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+</script>
 
 <script src="games.js"></script>
 <script>
@@ -131,23 +137,23 @@ function grid(){
   const list=G.filter(match);
   $('grid').innerHTML=list.map((g,i)=>{
     const c=g.colors||['#ff3b5c','#ffc53a'],n=ST.plays[g.id]||0;
-    return `<article class="card" tabindex="0" data-id="${esc(g.id)}" style="animation-delay:${i*50}ms">
+    return `<article class="card${g.disabled?' off':''}" tabindex="0" data-id="${esc(g.id)}" style="animation-delay:${i*50}ms">
       <div class="th" style="background:linear-gradient(135deg,${c[0]},${c[1]})">
-        ${g.badge?`<span class="badge">${esc(g.badge)}</span>`:''}
+        ${g.disabled?`<span class="badge off">🔧 ${esc(g.status||'Fuera de servicio')}</span>`:g.badge?`<span class="badge">${esc(g.badge)}</span>`:''}
         <button class="fav${ST.fav.includes(g.id)?' on':''}" data-fav="${esc(g.id)}" title="Favorito" aria-label="Favorito">${ST.fav.includes(g.id)?'★':'☆'}</button>
         ${g.img?`<img src="${esc(g.img)}" alt="" loading="lazy">`:`<span class="em">${esc(g.emoji||'🎮')}</span>`}
       </div>
       <div class="bd"><h3>${esc(g.name)}</h3><div class="tags">${(g.tags||[]).map(t=>`<i>${esc(t)}</i>`).join('')}</div>
         <p>${esc(g.desc||'')}</p><div class="ctl">🎮 ${esc(g.controls||'')}</div>
-        <div class="meta"><span>${n?'Jugado '+n+(n===1?' vez':' veces'):'Sin jugar aún'}</span><button class="btn" data-play="${esc(g.id)}">▶ JUGAR</button></div></div>
+        <div class="meta"><span>${n?'Jugado '+n+(n===1?' vez':' veces'):'Sin jugar aún'}</span><button class="btn" data-play="${esc(g.id)}"${g.disabled?' disabled':''}>${g.disabled?'⏳ '+esc(g.status||'No disponible'):'▶ JUGAR'}</button></div></div>
     </article>`}).join('');
   $('empty').style.display=list.length?'none':'block';
-  const l=G.find(g=>g.id===ST.last);
+  const l=G.find(g=>g.id===ST.last&&!g.disabled);
   $('cont').style.display=l?'flex':'none';
   if(l){$('ce').textContent=l.emoji||'🎮';$('cn').textContent=l.name;$('cb').onclick=()=>go(l.id)}
   $('foot').textContent=G.length+' juegos · tus favoritos y partidas se guardan en este navegador';
 }
-function go(id){opened=true;location.hash='#/'+id}
+function go(id){const x=G.find(g=>g.id===id);if(x&&x.disabled)return;opened=true;location.hash='#/'+id}
 $('grid').addEventListener('click',e=>{
   const f=e.target.closest('[data-fav]');
   if(f){e.stopPropagation();const id=f.dataset.fav;ST.fav=ST.fav.includes(id)?ST.fav.filter(x=>x!==id):[...ST.fav,id];save();grid();return}
@@ -175,7 +181,7 @@ function closeGame(){
   frame.onload=null;load('about:blank');cur=null;document.title='Arcade Hub · Mis juegos';grid();
 }
 function route(){
-  const m=location.hash.match(/^#\/(.+)$/),g=m&&G.find(x=>x.id===decodeURIComponent(m[1]));
+  const m=location.hash.match(/^#\/(.+)$/),g=m&&G.find(x=>x.id===decodeURIComponent(m[1])&&!x.disabled);
   if(g){if(!cur||cur.id!==g.id)openGame(g)}else if(cur)closeGame();
 }
 addEventListener('hashchange',route);

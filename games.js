@@ -10,7 +10,8 @@ window.GAMES = [
     desc: 'Turno de noche en una pizzería cerrada desde 1994. Prepara tres pedidos, sigue las pistas y registra lo imposible antes de que suene el teléfono.',
     controls: 'WASD mover · ratón mirar · E usar · R registrar · F linterna · Shift correr · Esc pausa',
     colors: ['#d3442e', '#e7bd78'],
-    badge: 'Nuevo'
+    disabled: true,
+    status: 'Actualizando'
   },
   {
     id: 'turno-de-caja',
@@ -20,7 +21,8 @@ window.GAMES = [
     desc: 'Simulador 3D de supermercado: escanea pedidos, atiende a clientes con paciencia limitada, resuelve incidencias y repón estantes.',
     controls: 'WASD mover · ratón mirar · F escanear · E interactuar · Shift correr · Esc pausa',
     colors: ['#2f7d4f', '#b8ed6b'],
-    badge: 'Nuevo'
+    disabled: true,
+    status: 'Actualizando'
   },
   {
     id: 'saltation',
