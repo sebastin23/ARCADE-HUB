@@ -191,6 +191,7 @@ canvas.glx{animation:glx 1.7s steps(1,end) infinite}
 .invt{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;background:#14093f;border:4px solid var(--navy);border-radius:14px;padding:12px 16px;color:#fff;font-family:var(--ln);text-align:center;font-size:18px}.invt .go{font-size:16px;padding:8px 14px;margin:6px 4px 0}
 .od{width:10px;height:10px;border-radius:50%;background:#555;display:inline-block;margin-right:6px}.lr.on .od{background:#7dff3a;box-shadow:0 0 6px #7dff3a}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;font-family:var(--ln);font-size:18px}.srow b{display:inline-block;min-width:54px;text-align:center}.lt .rb{display:flex;align-items:center;justify-content:center;padding:0}.lt .rb img{width:26px;height:26px;display:block;pointer-events:none}
+#tutb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 64px);left:50%;transform:translateX(-50%);z-index:9;display:none;max-width:min(92vw,520px);text-align:center;font-family:var(--ln);color:#fff;background:rgba(10,8,40,.72);border:4px solid var(--navy);border-radius:14px;padding:10px 16px;pointer-events:none;font-size:18px;text-shadow:0 2px 0 #000}#tutb b{color:#ffe14a;display:block;font-size:20px}#tutb small{display:block;opacity:.9;margin-top:4px}#tutb small.ok{color:#7dff3a;opacity:1}
 </style>
 </head>
 <body>
@@ -199,7 +200,7 @@ canvas.glx{animation:glx 1.7s steps(1,end) infinite}
   <div class="box"><small>MONEDAS</small><div class="v" id="cn">0</div></div>
   <div class="box"><small>ESCUDOS</small><div class="v" id="hp">♥♥</div></div>
 </div>
-<div id='rk'></div><button class='go alt' id='spx' style='position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);display:none;z-index:6;font-size:16px;padding:8px 14px'>SALIR</button>
+<div id='tutb'></div><div id='rk'></div><button class='go alt' id='spx' style='position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);display:none;z-index:6;font-size:16px;padding:8px 14px'>SALIR</button>
 <div id="hint">A/D girar · W turbo ∞ · S frenar · ESPACIO en el aire = voltereta</div>
 <div class="foot">
   <div class="box nit"><small><span id="kmh">0</span> KM/H · TURBO ∞</small><div class="bar"><i id="nb"></i></div></div>
@@ -314,7 +315,7 @@ const P={
  jumpwall(zc){const x=rr(-6,6),H=3.5;ramp(x,zc+6,H);wall(0,zc-7,28);for(let i=0;i<3;i++)pick('coin',x,H+2.3,zc-5-i*2)},
  wallgap(zc,d){const g=[Math.random()*6|0];if(d>.4)g.push(Math.random()*6|0);for(let i=0;i<6;i++){const x=-13.5+4.5*i+2.25;if(g.includes(i)){pick('coin',x,.9,zc+5);pick('coin',x,.9,zc+2);pick('coin',x,.9,zc-1)}else wall(x,zc,4.5)}},
  slider(zc){wall(0,zc,6,{amp:rr(5,7),sp:rr(1,1.6),ph:rr(0,6)});coins(rr(-6,6),zc-4,5,2.6,3)}};
-function genChunk(i){if(!daily.on)return genChunk0(i);const _r=Math.random;Math.random=mulb(daily.seed^Math.imul(i+1,2654435761));try{return genChunk0(i)}finally{Math.random=_r}}
+function genChunk(i){if(TUT.on)return genChunkTut(i);if(!daily.on)return genChunk0(i);const _r=Math.random;Math.random=mulb(daily.seed^Math.imul(i+1,2654435761));try{return genChunk0(i)}finally{Math.random=_r}}
 function genChunk0(i){const c={i,meshes:[]};cur=c;const z0=-i*L,d=Math.min(1,i/30);
   for(let k=0;k<2;k++){const zc=z0-12-k*24;if(i<2){P.coins(zc)}else{const pool=['coins','crates','crates','barrels','ramp','ramp'];if(i>=2)pool.push('zebra','zebra');if(i>=3)pool.push('river');if(i>=3)pool.push('wallgap');if(i>=5)pool.push('jumpwall','jumpwall');if(i>=8)pool.push('slider');if(d>.5)pool.push('wallgap','barrels');P[pool[Math.random()*pool.length|0]](zc,d)}}
   if(i>=1&&Math.random()<.1)pick(['mag','x2','bub','slo'][Math.random()*4|0],rr(-9,9),1.2,z0-24);
@@ -442,7 +443,7 @@ function dana(gz){cine([{d:3.8,txt:'Centro de Valencia…',al:'<b>⚠ ES-ALERT �
 const car={x:0,y:0,z:0,vx:0,vy:0,air:false,flip:0,pv:0};
 let st='menu',speed=0,dist=0,shields=2,nitro=60,invul=0,combo=0,cT=0,coinsN=0,bonus=0,shake=0,airT=0,lastVy=0,spin=0;const keys={};
 function resetWorld(){chunks.forEach(purge);chunks=[];objs=[];ramps=[];nextC=0;debris.forEach(d=>S.remove(d.m));debris=[];while(nextC*L<230)genChunk(nextC++)}
-function load(){if(!daily.rc&&!ls.get('nb_tut',0)){tutUI(()=>load());return}xaResetAll();puReset();acc=0;pSh=-1;admin.used=false;dsStop();roarT=6;breathT=0;zBr=0;if(!daily.rc){daily.on=mode==='daily';if(daily.on){daily.day=dayStr();daily.seed=hstr('nb'+daily.day)}}Object.assign(car,{x:0,y:0,z:0,vx:0,vy:0,air:false,flip:0,pv:0});CP=CARS[sel]||CARS[0];pw=buildCar(car3,CP);speed=0;dist=0;shields=CP.sh?3:2;nitro=100;lastZi=-1;zoneSet(0);invul=0;enemies.forEach(e=>S.remove(e.g));enemies=[];eT=3;combo=0;coinsN=0;bonus=0;shake=0;resetWorld();ghostLoad();st='play';danaDone=false;arrDone=false;if(daily.rc)st='play';else introCine();$('over').classList.add('hide');$('lb').classList.add('hide');setLobby(false);initAudio()}
+function load(){if(!daily.rc&&!TUT.on&&!ls.get('nb_tut',0)){tutOffer(()=>load());return}xaResetAll();puReset();acc=0;pSh=-1;admin.used=false;dsStop();roarT=6;breathT=0;zBr=0;if(!daily.rc){daily.on=mode==='daily'&&!TUT.on;if(daily.on){daily.day=dayStr();daily.seed=hstr('nb'+daily.day)}}Object.assign(car,{x:0,y:0,z:0,vx:0,vy:0,air:false,flip:0,pv:0});CP=CARS[sel]||CARS[0];pw=buildCar(car3,CP);speed=0;dist=0;shields=CP.sh?3:2;nitro=100;lastZi=-1;zoneSet(0);invul=0;enemies.forEach(e=>S.remove(e.g));enemies=[];eT=3;combo=0;coinsN=0;bonus=0;shake=0;resetWorld();ghostLoad();st='play';danaDone=false;arrDone=false;if(daily.rc||TUT.on)st='play';else introCine();$('over').classList.add('hide');$('lb').classList.add('hide');setLobby(false);initAudio()}
 function panel(h,d){$('pn').style.maxWidth='';$('lb').classList.add('hide');$('pn').innerHTML=h;$('over').classList.remove('hide');$('over').classList.toggle('dock',!!d)}
 function menuOld(){panel(`<h1>NEÓN BUGGY<br>INFINITO</h1><p>La carretera no se acaba nunca. Recoge monedas, rompe cajas, vuela barriles, salta las rampas y esquiva los muros. ¡Llega lo más lejos que puedas!</p><p><kbd>A D</kbd> girar · <kbd>W</kbd> turbo ∞ · <kbd>S</kbd> frenar · <kbd>ESPACIO</kbd> voltereta en el aire. En móvil usa los botones.</p><p>Tienes escudos: un choque con un muro te quita uno. Si no te quedan, se acabó.</p>${best?`<p>Récord: <b>${best} pts</b></p>`:''}<button class="go" id="go">ARRANCAR</button>`);$('go').onclick=load;$('go').focus()}
 const score=()=>Math.floor(dist)+bonus;
@@ -489,7 +490,7 @@ function frame(){requestAnimationFrame(frame);const rdt=Math.min(clk.getDelta(),
   if(st==='play'){
     const sIn=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0),nitOn=!!(keys.KeyW||keys.ArrowUp||XA.permNit),brake=keys.KeyS||keys.ArrowDown;
     nitro=100;puUpd(rdt,dt);if(pSh<0)pSh=shields;if(shields<pSh)acc*=.35;pSh=shields;acc+=dt*.25*XP.accM;
-    const _b=26+(CP.spd||0)+Math.min(22,dist/100)+acc+(nitOn?16*XP.nitM:0)-(brake?12*XP.brakeM:0),tgt=Math.min(admin.spd>1?Infinity:XP.cap,Math.max(0,_b*admin.spd));XA.effM=_b>0?tgt/_b:1;speed+=(tgt-speed)*Math.min(1,dt*(tgt>speed?1.1*XP.accM:2.5*XP.dragM));if(admin.spd>1&&isFinite(tgt))speed=tgt;
+    const _b=26+(CP.spd||0)+Math.min(22,dist/100)+acc+(nitOn?16*XP.nitM:0)-(brake?12*XP.brakeM:0),tgt=TUT.on?(brake?12:nitOn?42:28):Math.min(admin.spd>1?Infinity:XP.cap,Math.max(0,_b*admin.spd));XA.effM=_b>0?tgt/_b:1;speed+=(tgt-speed)*Math.min(1,dt*(tgt>speed?1.1*XP.accM:2.5*XP.dragM));if(admin.spd>1&&isFinite(tgt))speed=tgt;
     car.vx+=(sIn*(CP.steer||1)*XP.steerM*SET.steer*(car.air?11:17)*(.7+Math.min(speed,120)/90)-car.vx)*Math.min(1,dt*7*XP.grip);car.x+=car.vx*dt;if(admin.free)car.x=Math.max(-330,Math.min(330,car.x));else if(Math.abs(car.x)>13.2){car.x=Math.sign(car.x)*13.2;car.vx*=-.3;shake=Math.max(shake,.1)}
     car.z-=speed*dt;dist=-car.z;invul=Math.max(0,invul-dt);
     /* vertical */
@@ -530,7 +531,7 @@ function frame(){requestAnimationFrame(frame);const rdt=Math.min(clk.getDelta(),
     cam.position.set(camP.x+(Math.random()-.5)*shake*XP.shk,camP.y+(Math.random()-.5)*shake*XP.shk,camP.z);cam.lookAt(car.x*(admin.free?1:.9),car.y*.5+1.3,car.z-14)}
   const f=62+XP.fovAdd+Math.min(28,Math.max(0,speed-90)/80)+Math.min(speed,90)*.3+((keys.KeyW||keys.ArrowUp)&&nitro>0&&st==='play'?6:0);cam.fov+=(f-cam.fov)*.08;cam.updateProjectionMatrix();
   sun.position.set(car.x-14,30,car.z+10);sun.target.position.set(car.x,0,car.z);
-  if(st==='cine')cineTick(dt,t);monUpd(dt,t);bombUpd(dt,t);fxUpd(dt,t);raceTick(dt,t);ghostTick(dt);R.render(S,cam)}
+  if(st==='cine')cineTick(dt,t);monUpd(dt,t);bombUpd(dt,t);fxUpd(dt,t);raceTick(dt,t);ghostTick(dt);tutTick(dt);R.render(S,cam)}
 addEventListener('error',e=>{const h=$('hint');h.style.display='block';h.textContent='Error: '+e.message});
 /* ---- skins, garaje, pase y enemigos ---- */
 const mcache={},mbc={},mglc={};
@@ -542,7 +543,7 @@ function buildCar(g,s){g.clear();const sh=s.shape||0,ws=[],add=(w,h,d,x,y,z,m)=>
  const gl=new THREE.Mesh(gPl,mgl(s.c1));gl.rotation.x=-Math.PI/2;gl.position.y=.08;g.add(gl);
  const k=sh===2?1.2:1;[[1.15,-1.4],[-1.15,-1.4],[1.15,1.4],[-1.15,1.4]].forEach(p=>{const w=new THREE.Mesh(gW,mWh);w.add(new THREE.Mesh(gHb,mbf(s.c2)));w.scale.setScalar(k);w.position.set(p[0],.55*k,p[1]);w.castShadow=true;w.rotation.order='YXZ';g.add(w);ws.push(w)});return ws}
 function menuV2(){menuOld();pw=buildCar(car3,CARS[sel]);const w=document.createElement('p');w.innerHTML='🪙 <b>'+wallet+'</b> · Coche: <b>'+CARS[sel].n+'</b><br>Cuidado con los coches rivales: los rojos te persiguen. ¡Aplástalos cayendo encima desde una rampa!';$('pn').insertBefore(w,$('go'));const r=document.createElement('div');r.className='row';r.innerHTML="<button class='go alt' id='gar'>GARAJE</button><button class='go alt' id='pas'>PASE</button>";$('pn').appendChild(r);$('gar').onclick=()=>{gi=sel;garage()};$('pas').onclick=passUI}
-function toMenu(){ghostClear();if(daily.rc||RC.ch)raceLeave();st='menu';puReset();dsStop();Object.assign(car,{x:0,y:0,z:0,vx:0,vy:0,air:false,flip:0,pv:0});speed=0;dist=0;invul=0;enemies.forEach(e=>S.remove(e.g));enemies=[];resetWorld();menu()}
+function toMenu(){TUT.on=0;ghostClear();if(daily.rc||RC.ch)raceLeave();st='menu';puReset();dsStop();Object.assign(car,{x:0,y:0,z:0,vx:0,vy:0,air:false,flip:0,pv:0});speed=0;dist=0;invul=0;enemies.forEach(e=>S.remove(e.g));enemies=[];resetWorld();menu()}
 function garage(){const c=CARS[gi],o=own.includes(gi);pw=buildCar(car3,c);car.pv=0;
  const act=o?(sel===gi?"<button class='go' disabled>EQUIPADO</button>":"<button class='go' id='eq'>EQUIPAR</button>"):`<button class='go' id='by'${wallet<c.cost?' disabled':''}>COMPRAR · ${c.cost} 🪙</button>`;
  panel(`<h1>GARAJE</h1><p>🪙 <b>${wallet}</b> monedas</p><div class='cs'><button class='ar' id='pv'>◀</button><div><b style='font-size:22px'>${c.n}</b><div class='perk'>${c.perk}</div></div><button class='ar' id='nx'>▶</button></div><div class='row'>${act}<button class='go alt' id='bk'>VOLVER</button></div>`,1);
@@ -1276,7 +1277,7 @@ async function claimName(n){const r=await net.sb.from('profiles').insert({id:net
  net.name=n;ls.set('nb_name',n);return 'ok'}
 function nameUI(msg){panel(`<h1>ELIGE TU USUARIO</h1><p>Será tu nombre en las tablas y para tus amigos. De 3 a 14 letras, números o _ . No se puede repetir ni cambiar después.</p><input class='inp' id='nin' maxlength='14' autocomplete='off' autocapitalize='off' spellcheck='false' placeholder='TuNombre'><p id='nmsg' style='color:#ffe14a;min-height:22px'>${msg||''}</p><button class='go' id='nok'>ENTRAR</button> <button class='go alt' id='nlg'>YA TENGO USUARIO</button>`);
  const inp=$('nin'),m=$('nmsg');inp.focus();
- const go=async()=>{const n=inp.value.trim();if(!nameOk(n)){m.textContent='Usa de 3 a 14 caracteres: letras, números o _';return}$('nok').disabled=true;m.textContent='Comprobando…';const r=await claimName(n);if(r==='ok')menu();else{$('nok').disabled=false;m.textContent=r==='taken'?'Ese nombre ya está cogido, prueba otro':'Error de conexión, inténtalo otra vez'}};
+ const go=async()=>{const n=inp.value.trim();if(!nameOk(n)){m.textContent='Usa de 3 a 14 caracteres: letras, números o _';return}$('nok').disabled=true;m.textContent='Comprobando…';const r=await claimName(n);if(r==='ok')tutOffer(menu);else{$('nok').disabled=false;m.textContent=r==='taken'?'Ese nombre ya está cogido, prueba otro':'Error de conexión, inténtalo otra vez'}};
  $('nok').onclick=go;$('nlg').onclick=()=>loginUI();inp.onkeydown=e=>{if(e.key==='Enter')go()}}
 async function submitRun(d,g){const say=t=>{const e=$('dres');if(e)e.innerHTML=t};
  if(!net.ok||!net.name){say(net.ok?'Elige un usuario para salir en la tabla.':'Sin conexión: esta partida no entra en la tabla.');return}
@@ -1438,24 +1439,54 @@ function setApply(){try{R.setPixelRatio(Math.min(window.devicePixelRatio||1,SET.
  try{const sh=SET.q!==0;if(R.shadowMap.enabled!==sh){R.shadowMap.enabled=sh;sun.castShadow=sh;S.traverse(o=>{const m=o.material;if(m)(Array.isArray(m)?m:[m]).forEach(q=>{q.needsUpdate=true})})}}catch(e){}
  try{if(mg)mg.gain.value=SET.vol}catch(e){}}
 function setUI(){const QN=['BAJA','MEDIA','ALTA'];
- panel(`<h1>AJUSTES</h1><div class='srow'><span>Volumen</span><span><button class='go alt tg' id='vm'>−</button> <b id='vv'></b> <button class='go alt tg' id='vp'>+</button></span></div><div class='srow'><span>Calidad gráfica</span><button class='go alt tg' id='sq'></button></div><div class='srow'><span>Sensibilidad de giro</span><span><button class='go alt tg' id='sm'>−</button> <b id='sv'></b> <button class='go alt tg' id='sp'>+</button></span></div><p style='font-size:13px;opacity:.85'>Calidad BAJA: sin sombras y menos resolución, para móviles lentos.</p><div class='row'><button class='go alt' id='stut'>VER TUTORIAL</button></div><div class='row'><button class='go' id='bk'>VOLVER</button></div>`);
+ panel(`<h1>AJUSTES</h1><div class='srow'><span>Volumen</span><span><button class='go alt tg' id='vm'>−</button> <b id='vv'></b> <button class='go alt tg' id='vp'>+</button></span></div><div class='srow'><span>Calidad gráfica</span><button class='go alt tg' id='sq'></button></div><div class='srow'><span>Sensibilidad de giro</span><span><button class='go alt tg' id='sm'>−</button> <b id='sv'></b> <button class='go alt tg' id='sp'>+</button></span></div><p style='font-size:13px;opacity:.85'>Calidad BAJA: sin sombras y menos resolución, para móviles lentos.</p><div class='row'><button class='go alt' id='stut'>JUGAR EL TUTORIAL</button></div><div class='row'><button class='go' id='bk'>VOLVER</button></div>`);
  const sv=()=>{ls.set('nb_set',SET);setApply()},up=()=>{$('vv').textContent=Math.round(SET.vol*100)+'%';$('sv').textContent=Math.round(SET.steer*100)+'%';$('sq').textContent=QN[SET.q]},cl=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v*10)/10));
  $('vm').onclick=()=>{SET.vol=cl(SET.vol-.1,0,1);sv();up();snd(600,.1,'triangle',.08,0)};$('vp').onclick=()=>{SET.vol=cl(SET.vol+.1,0,1);sv();up();snd(600,.1,'triangle',.08,0)};
  $('sm').onclick=()=>{SET.steer=cl(SET.steer-.1,.5,1.6);sv();up()};$('sp').onclick=()=>{SET.steer=cl(SET.steer+.1,.5,1.6);sv();up()};
- $('sq').onclick=()=>{SET.q=(SET.q+1)%3;sv();up()};$('stut').onclick=()=>tutUI(()=>menu());$('bk').onclick=menu;up()}
-function tutUI(done){const T=[['CONDUCIR',"<p><kbd>A</kbd> <kbd>D</kbd> o las flechas para girar.</p><p>En el móvil usa los botones de abajo.</p><p>Mantén el coche en la carretera: ¡los lados son peligrosos!</p>"],
-  ['TURBO, FRENO Y SALTO',"<p><kbd>W</kbd> turbo infinito · <kbd>S</kbd> frenar.</p><p><kbd>ESPACIO</kbd> voltereta en el aire: salta desde una rampa y gira.</p><p>Si aterrizas mal, pierdes velocidad.</p>"],
-  ['OBJETIVO',"<p>Recoge monedas y rompe cajas.</p><p>Cada choque con un muro te quita un escudo. Sin escudos, se acabó.</p><p>Cae encima de los coches rojos para aplastarlos y respeta los pasos de cebra.</p>"]];let i=0;
- const fin=()=>{ls.set('nb_tut',1);done&&done()},draw=()=>{panel(`<h1>${T[i][0]}</h1>${T[i][1]}<p style='opacity:.8'>${i+1} / ${T.length}</p><div class='row'><button class='go' id='tn'>${i<T.length-1?'SIGUIENTE':'¡A JUGAR!'}</button><button class='go alt' id='ts'>SALTAR</button></div>`);$('tn').onclick=()=>{if(i<T.length-1){i++;draw()}else fin()};$('ts').onclick=fin;$('tn').focus()};draw()}
+ $('sq').onclick=()=>{SET.q=(SET.q+1)%3;sv();up()};$('stut').onclick=()=>tutStart();$('bk').onclick=menu;up()}
+/* ---------- tutorial jugable ---------- */
+const TOUCH=typeof matchMedia==='function'&&matchMedia('(pointer:coarse)').matches;
+const TUT={on:0,k:-1,ok:[0,0,0,0,0,0],nit:0,brk:0,flip:0,cr:0};
+const TEND=24*L+40;
+const TSEC=[
+ {t:'GIRAR',d:TOUCH?'Usa ◀ ▶ para coger las monedas':'Usa A / D (o las flechas) para coger las monedas',ok:()=>coinsN>=5,p:()=>Math.min(5,coinsN)+' / 5 monedas'},
+ {t:'TURBO',d:TOUCH?'Mantén el botón de fuego':'Mantén W (o la flecha arriba)',ok:()=>TUT.nit>=2,p:()=>Math.min(2,TUT.nit).toFixed(1)+' / 2 s'},
+ {t:'FRENO',d:TOUCH?'En el móvil no hace falta frenar: esquiva los huecos':'Mantén S para frenar y pasar por los huecos de los muros',ok:()=>TOUCH?dist>=2*192+150:TUT.brk>=1.5,p:()=>TOUCH?'Pasa los muros':Math.min(1.5,TUT.brk).toFixed(1)+' / 1,5 s'},
+ {t:'RAMPA Y VOLTERETA',d:TOUCH?'Sube a la rampa y mantén el botón de giro en el aire':'Sube a la rampa y mantén ESPACIO en el aire',ok:()=>TUT.flip>=5,p:()=>Math.min(5,TUT.flip).toFixed(1)+' / 5 de giro'},
+ {t:'CAJAS',d:'Choca contra las cajas para romperlas',ok:()=>TUT.cr>=3,p:()=>Math.min(3,TUT.cr)+' / 3 cajas'},
+ {t:'PASO DE CEBRA',d:'Las abuelitas cruzan: atropellarlas te frena. ¡Y cuidado con los coches rojos!',ok:()=>dist>=23*L+20,p:()=>'Cruza sin prisa'}];
+function tutOffer(next){panel("<h1>¿APRENDER A JUGAR?</h1><p>Un circuito corto de un minuto te enseña a girar, usar el turbo, frenar, saltar rampas y romper cajas. No puedes morir ni puntúa.</p><div class='row'><button class='go' id='tsi'>SÍ, ENSÉÑAME</button><button class='go alt' id='tno'>NO, GRACIAS</button></div>");
+ $('tsi').onclick=()=>tutStart();$('tno').onclick=()=>{ls.set('nb_tut',1);next&&next()};$('tsi').focus()}
+function tutStart(){if(RC.ch)raceLeave();ls.set('nb_tut',1);Object.assign(TUT,{on:1,k:-1,ok:[0,0,0,0,0,0],nit:0,brk:0,flip:0,cr:0});daily.rc=0;load()}
+function genChunkTut(i){const c={i,meshes:[]};cur=c;const z0=-i*L,sec=Math.floor(i/4);
+ for(let k=0;k<2;k++){const zc=z0-12-k*24;
+  if(sec===0)coins(k?-7:7,zc+10,8,2.5,0);
+  else if(sec===1)coins(0,zc+10,8,2.6,0);
+  else if(sec===2){if(!k){const g=(i*5+2)%6;for(let j=0;j<6;j++){const x=-13.5+4.5*j+2.25;if(j===g){pick('coin',x,.9,zc+3);pick('coin',x,.9,zc)}else wall(x,zc,4.5)}}}
+  else if(sec===3){if(!k){const x=((i%3)-1)*4;ramp(x,zc+6,3.5);for(let n=0;n<4;n++)pick('coin',x,5.5,zc-3-n*4)}}
+  else if(sec===4){for(let n=0;n<5;n++)crate(-8+4*n,zc-2+(n%2)*3);if(!k)barrel(0,zc-8)}
+  else if(sec===5){if(!k)P.zebra(zc);else coins(rr(-6,6),zc+10,6,3,2)}}
+ if(i===24){[-1,1].forEach(q=>{const m=box(.8,6,.8,mCon);m.position.set(q*14,3,z0-6);reg(m)});const t=box(29,1.2,.8,mLamp);t.position.set(0,6,z0-6);reg(t)}
+ deco(i,z0);chunks.push(c)}
+function tutTick(dt){const b=$('tutb');if(!TUT.on||st!=='play'){if(b&&b.style.display!=='none')b.style.display='none';return}
+ shields=3;eT=99;const k=Math.min(5,Math.floor(dist/192));if(TUT.k!==k){TUT.k=k;TUT.nit=TUT.brk=TUT.flip=TUT.cr=0}
+ if(keys.KeyW||keys.ArrowUp)TUT.nit+=dt;if(keys.KeyS||keys.ArrowDown)TUT.brk+=dt;if(car.air&&keys.Space)TUT.flip+=7*dt;
+ const s=TSEC[k];if(s.ok())TUT.ok[k]=1;
+ const h='<b>PASO '+(k+1)+' / 6 · '+s.t+'</b>'+s.d+'<small class="'+(TUT.ok[k]?'ok':'')+'">'+(TUT.ok[k]?'✔ ¡HECHO!':s.p())+'</small>';
+ if(b){b.style.display='block';if(b._h!==h){b.innerHTML=h;b._h=h}}
+ if(dist>=TEND)tutFinish()}
+function tutFinish(){if(!TUT.on)return;TUT.on=0;st='end';const n=TUT.ok.filter(Boolean).length,b=$('tutb');if(b)b.style.display='none';AS.tut=1;achCheck();
+ panel("<h1>¡TUTORIAL COMPLETADO!</h1><p>Pasos conseguidos: <b>"+n+" / 6</b></p><p>"+(n<6?'Puedes repetirlo cuando quieras desde AJUSTES.':'¡Ya sabes jugar!')+"</p><div class='row'><button class='go' id='tgo'>JUGAR</button><button class='go alt' id='trp'>REPETIR</button><button class='go alt' id='tmn'>MENÚ</button></div>");
+ $('tgo').onclick=load;$('trp').onclick=tutStart;$('tmn').onclick=toMenu;$('tgo').focus()}
 /* logros */
-const ACHS=[{id:'first',n:'Primera carrera',d:'Termina una partida',t:s=>s.games>=1},{id:'d1k',n:'Mil metros',d:'Llega a 1.000 m en una partida',t:s=>s.dmax>=1000},{id:'d5k',n:'Cinco mil',d:'Llega a 5.000 m en una partida',t:s=>s.dmax>=5000},{id:'d10k',n:'Diez mil',d:'Llega a 10.000 m en una partida',t:s=>s.dmax>=10000},
+const ACHS=[{id:'first',n:'Primera carrera',d:'Termina una partida',t:s=>s.games>=1},{id:'tut',n:'Aprendiz',d:'Completa el tutorial',t:s=>s.tut>=1},{id:'d1k',n:'Mil metros',d:'Llega a 1.000 m en una partida',t:s=>s.dmax>=1000},{id:'d5k',n:'Cinco mil',d:'Llega a 5.000 m en una partida',t:s=>s.dmax>=5000},{id:'d10k',n:'Diez mil',d:'Llega a 10.000 m en una partida',t:s=>s.dmax>=10000},
  {id:'meta',n:'Llegada a Beirut',d:'Cruza la meta',t:s=>s.meta>=1},{id:'c100',n:'Bolsillos llenos',d:'Recoge 100 monedas en una partida',t:s=>s.cmax>=100},{id:'cr100',n:'Rompecajas',d:'Rompe 100 cajas',t:s=>s.cr>=100},{id:'gr10',n:'Cuidado, abuelita',d:'Atropella a 10 abuelitas',t:s=>s.gr>=10},
  {id:'rich',n:'Cartera gorda',d:'Ten 1.000 monedas',t:s=>wallet>=1000},{id:'cars3',n:'Coleccionista',d:'Ten 3 coches',t:s=>own.length>=3},{id:'daily',n:'Reto cumplido',d:'Juega el reto diario',t:s=>s.dl>=1},{id:'race',n:'A correr con amigos',d:'Juega una carrera online',t:s=>s.races>=1},{id:'win',n:'Campeón',d:'Gana una carrera online contra otra persona',t:s=>s.wins>=1}];
-let AS=Object.assign({games:0,dmax:0,cmax:0,cr:0,gr:0,meta:0,races:0,wins:0,dl:0},ls.get('nb_ast',{}));let AU=ls.get('nb_ach',[]);
+let AS=Object.assign({games:0,dmax:0,cmax:0,cr:0,gr:0,meta:0,races:0,wins:0,dl:0,tut:0},ls.get('nb_ast',{}));let AU=ls.get('nb_ach',[]);
 function achToast(a){const d=document.createElement('div');d.className='invt';d.style.pointerEvents='none';d.innerHTML="LOGRO DESBLOQUEADO<br><b>"+esc(a.n)+"</b><br><small>"+esc(a.d)+"</small>";document.body.appendChild(d);snd(880,.25,'triangle',.08,400);setTimeout(()=>d.remove(),3500)}
 function achCheck(){const nw=[];ACHS.forEach(a=>{if(!AU.includes(a.id)&&a.t(AS)){AU.push(a.id);nw.push(a)}});ls.set('nb_ast',AS);ls.set('nb_ach',AU);nw.forEach((a,i)=>setTimeout(()=>achToast(a),i*3600));if(nw.length)cloudDirty()}
-{const _sq=squish;squish=function(){AS.gr++;_sq()};const _sm=smash;smash=function(o,k){if(o&&o.t==='crate')AS.cr++;_sm(o,k)};
- const _ov=over;over=function(fin){_ov(fin);if(admin.used)return;AS.games++;if(dist>AS.dmax)AS.dmax=Math.floor(dist);if(coinsN>AS.cmax)AS.cmax=coinsN;if(fin)AS.meta++;if(daily.rc)AS.races++;else if(daily.on)AS.dl++;ghostSave();achCheck()};
+{const _sq=squish;squish=function(){if(!TUT.on)AS.gr++;_sq()};const _sm=smash;smash=function(o,k){if(o&&o.t==='crate'){if(TUT.on)TUT.cr++;else AS.cr++}_sm(o,k)};
+ const _ov=over;over=function(fin){if(TUT.on){shields=3;return}_ov(fin);if(admin.used)return;AS.games++;if(dist>AS.dmax)AS.dmax=Math.floor(dist);if(coinsN>AS.cmax)AS.cmax=coinsN;if(fin)AS.meta++;if(daily.rc)AS.races++;else if(daily.on)AS.dl++;ghostSave();achCheck()};
  const _rp=racePay;racePay=function(L,mi){_rp(L,mi);if(mi===0&&L.length>=2&&Object.keys(RC.st).length>=1&&!admin.used){AS.wins++;achCheck()}}}
 function achUI(){panel(`<h1>LOGROS ${AU.length}/${ACHS.length}</h1><div class='bl' id='al' style='max-height:300px'>${ACHS.map(a=>{const on=AU.includes(a.id);return `<div class='lr${on?' me':''}'><span><strong>${esc(a.n)}</strong><br><small>${esc(a.d)}</small></span><em>${on?'HECHO':'—'}</em></div>`}).join('')}</div><div class='row'><button class='go' id='bk'>VOLVER</button></div>`);$('bk').onclick=menu}
 /* guardado en la nube */
