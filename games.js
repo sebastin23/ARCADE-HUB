@@ -48,6 +48,7 @@ window.GAMES = [
     id: 'neon-buggy',
     name: 'Neón Buggy Infinito',
     emoji: '🏎️',
+    img: 'neon-buggy-icono.png',
     tags: ['3D', 'Conducción', 'Arcade'],
     desc: 'Viaja desde Villapeña huyendo de un monstruo gigante: Burgos, Madrid, Valencia (¡DANA!) y Marruecos. Pasos de cebra, abuelitas, cinemáticas, garaje y Pase Neón. ¡Turbo infinito!',
     controls: 'A/D girar · W turbo ∞ · S frenar · Espacio voltereta en el aire · botones en móvil',
