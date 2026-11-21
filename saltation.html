@@ -1171,6 +1171,49 @@ S.m=mOf(save.mp); S.mDisp=S.m; setShirt(S.m<0.6||save.skin==='gala');
 S.chapter=Math.min(save.chapter||0,unlockedCount()-1);
 injApply(); applySkin(); applyRope(); buildEnv(S.chapter); resize(); showMenu();
 requestAnimationFrame(frame);
+/* ---------- ADMIN de Cuerda de Acero ----------
+   Se abre con el código Konami (↑ ↑ ↓ ↓ ← → ← → B A) o, en móvil, tocando 5 veces el rótulo "Puerto Hierro" del menú. Pide la contraseña de admin (ver seguridad.js). */
+(()=>{
+  const css=document.createElement('style');
+  css.textContent='#adm{position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:60;width:min(300px,calc(100vw - 20px));max-height:calc(100vh - 20px);overflow-y:auto;background:rgba(13,17,21,.96);border:1px solid var(--crane);padding:10px 12px;font-family:var(--f-label);font-size:13px;letter-spacing:.06em;text-transform:uppercase;display:none}#adm.on{display:block}#adm h3{margin:0 0 8px;font-family:var(--f-display);font-size:20px;color:var(--crane);display:flex;justify-content:space-between;align-items:center}#adm .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}#adm button{background:var(--steel-600);border:1px solid transparent;padding:8px 6px;color:var(--chalk);font:inherit;letter-spacing:.05em}#adm button.on{border-color:var(--ok);color:var(--ok)}#adm button:hover{border-color:var(--crane)}#adm .sec{color:var(--steel-400);font-size:11px;margin:8px 0 4px}#adm .x{padding:2px 8px}';
+  document.head.appendChild(css);
+  const pn=document.createElement('div');pn.id='adm';document.body.appendChild(pn);
+  const refresh=()=>{ if(typeof refreshMenu==='function') refreshMenu(); updHudForce(); };
+  const updHudForce=()=>{ H.m=-1; H.inj=-1; };
+  const tog=(k,label)=>`<button data-t="${k}" class="${ADM[k]?'on':''}">${label}</button>`;
+  function draw(){
+    pn.innerHTML=`<h3>⚡ ADMIN <button class="x" id="axc">✕</button></h3>
+    <div class="sec">Modos</div><div class="g">${tog('imm','Inmortal')}${tog('gold','Oro infinito')}${tog('noinj','Sin lesiones')}${tog('all','Todos los capítulos')}</div>
+    <div class="sec">Fuerza</div><div class="g"><button data-a="mus+">+100 músculo</button><button data-a="musmax">Titán (máx.)</button><button data-a="mus0">Flaco (0)</button><button data-a="heal">Curar tobillos</button></div>
+    <div class="sec">Progreso</div><div class="g"><button data-a="j100">+100 saltos</button><button data-a="j1000">+1000 saltos</button><button data-a="shop">Desbloquear tienda</button><button data-a="coins">+10000 monedas</button></div>
+    <div class="sec">Ir al capítulo</div><div class="g">${CH.map((c,i)=>`<button data-c="${i}">${i+1}. ${c.name}</button>`).join('')}</div>
+    <div class="sec">Velocidad de la cuerda</div><div class="g">${[[1,'Normal'],[.75,'×0.75'],[.5,'×0.5'],[1.3,'×1.3']].map(([v,l])=>`<button data-s="${v}" class="${ADM.slow===v?'on':''}">${l}</button>`).join('')}</div>`;
+    pn.querySelector('#axc').onclick=()=>pn.classList.remove('on');
+    pn.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ const k=b.dataset.t; ADM[k]=ADM[k]?0:1; if(k==='noinj'&&ADM[k]){ save.inj=0; injApply(); } if(k==='gold'&&ADM[k]) save.coins=99999999; draw(); refresh(); });
+    pn.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ ADM.slow=+b.dataset.s; draw(); });
+    pn.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.c; ADM.all=1; pn.classList.remove('on'); startRun(i); });
+    pn.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+      const a=b.dataset.a;
+      if(a==='mus+') save.mp+=100; else if(a==='musmax') save.mp=Math.max(save.mp,1500); else if(a==='mus0') save.mp=0;
+      else if(a==='heal'){ save.inj=0; injApply(); }
+      else if(a==='j100'){ save.total+=100; } else if(a==='j1000'){ save.total+=1000; }
+      else if(a==='coins') save.coins+=10000;
+      else if(a==='shop'){ ROPES.forEach(r=>{ if(!save.own.includes(r.id)) save.own.push(r.id); }); SKINS.forEach(k=>{ if(!save.own.includes(k.id)) save.own.push(k.id); }); }
+      S.m=mOf(save.mp); setShirt(S.m<0.6||save.skin==='gala'); persist(); refresh(); toast('Admin: hecho');
+    });
+  }
+  function open(){
+    if(pn.classList.contains('on')){ pn.classList.remove('on'); return; }
+    if(ADM.on){ draw(); pn.classList.add('on'); return; }
+    const w=SEC.bloqueado(); if(w){ alert('Demasiados intentos. Espera '+w+' s.'); return; }
+    const t=prompt('Contraseña de administrador'); if(t===null) return;
+    if(SEC.admin(t)){ ADM.on=1; draw(); pn.classList.add('on'); } else alert(SEC.bloqueado()?'Demasiados intentos. Espera 1 minuto.':'Contraseña incorrecta');
+  }
+  let kb=[];
+  addEventListener('keydown',e=>{ if(e.target&&e.target.tagName==='INPUT')return; kb.push(e.code); if(kb.length>10) kb.shift(); if(kb.length===10&&SEC.konami(kb)){ kb=[]; open(); } });
+  let n=0,t0=0; const k=document.querySelector('#title .kick');
+  if(k) k.addEventListener('click',()=>{ const now=performance.now(); n=now-t0<700?n+1:1; t0=now; if(n>=5){ n=0; open(); } });
+})();
 })();
 </script>
 
@@ -1249,50 +1292,6 @@ document.addEventListener('DOMContentLoaded',()=>{
  set('#shop h2','Shop');set('#tabRope b','Ropes');set('#tabRope span','More muscle, more speed');set('#tabSkin b','Skins');set('#tabSkin span','Change your outfit');
  const sh=q('#shop .help');if(sh)sh.textContent='You earn 1 coin per clean jump (2 if perfect). Heavy ropes build muscle faster, but spin faster.';
 });})();
-</script>
-<script>
-/* ---------- ADMIN de Cuerda de Acero ----------
-   Se abre con F2 o tocando 5 veces el rótulo "Puerto Hierro" del menú. Pide la contraseña de admin (ver seguridad.js). */
-(()=>{
-  const css=document.createElement('style');
-  css.textContent='#adm{position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:60;width:min(300px,calc(100vw - 20px));max-height:calc(100vh - 20px);overflow-y:auto;background:rgba(13,17,21,.96);border:1px solid var(--crane);padding:10px 12px;font-family:var(--f-label);font-size:13px;letter-spacing:.06em;text-transform:uppercase;display:none}#adm.on{display:block}#adm h3{margin:0 0 8px;font-family:var(--f-display);font-size:20px;color:var(--crane);display:flex;justify-content:space-between;align-items:center}#adm .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}#adm button{background:var(--steel-600);border:1px solid transparent;padding:8px 6px;color:var(--chalk);font:inherit;letter-spacing:.05em}#adm button.on{border-color:var(--ok);color:var(--ok)}#adm button:hover{border-color:var(--crane)}#adm .sec{color:var(--steel-400);font-size:11px;margin:8px 0 4px}#adm .x{padding:2px 8px}';
-  document.head.appendChild(css);
-  const pn=document.createElement('div');pn.id='adm';document.body.appendChild(pn);
-  const refresh=()=>{ if(typeof refreshMenu==='function') refreshMenu(); updHudForce(); };
-  const updHudForce=()=>{ H.m=-1; H.inj=-1; };
-  const tog=(k,label)=>`<button data-t="${k}" class="${ADM[k]?'on':''}">${label}</button>`;
-  function draw(){
-    pn.innerHTML=`<h3>⚡ ADMIN <button class="x" id="axc">✕</button></h3>
-    <div class="sec">Modos</div><div class="g">${tog('imm','Inmortal')}${tog('gold','Oro infinito')}${tog('noinj','Sin lesiones')}${tog('all','Todos los capítulos')}</div>
-    <div class="sec">Fuerza</div><div class="g"><button data-a="mus+">+100 músculo</button><button data-a="musmax">Titán (máx.)</button><button data-a="mus0">Flaco (0)</button><button data-a="heal">Curar tobillos</button></div>
-    <div class="sec">Progreso</div><div class="g"><button data-a="j100">+100 saltos</button><button data-a="j1000">+1000 saltos</button><button data-a="shop">Desbloquear tienda</button><button data-a="coins">+10000 monedas</button></div>
-    <div class="sec">Ir al capítulo</div><div class="g">${CH.map((c,i)=>`<button data-c="${i}">${i+1}. ${c.name}</button>`).join('')}</div>
-    <div class="sec">Velocidad de la cuerda</div><div class="g">${[[1,'Normal'],[.75,'×0.75'],[.5,'×0.5'],[1.3,'×1.3']].map(([v,l])=>`<button data-s="${v}" class="${ADM.slow===v?'on':''}">${l}</button>`).join('')}</div>`;
-    pn.querySelector('#axc').onclick=()=>pn.classList.remove('on');
-    pn.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ const k=b.dataset.t; ADM[k]=ADM[k]?0:1; if(k==='noinj'&&ADM[k]){ save.inj=0; injApply(); } if(k==='gold'&&ADM[k]) save.coins=99999999; draw(); refresh(); });
-    pn.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ ADM.slow=+b.dataset.s; draw(); });
-    pn.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.c; ADM.all=1; pn.classList.remove('on'); startRun(i); });
-    pn.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
-      const a=b.dataset.a;
-      if(a==='mus+') save.mp+=100; else if(a==='musmax') save.mp=Math.max(save.mp,1500); else if(a==='mus0') save.mp=0;
-      else if(a==='heal'){ save.inj=0; injApply(); }
-      else if(a==='j100'){ save.total+=100; } else if(a==='j1000'){ save.total+=1000; }
-      else if(a==='coins') save.coins+=10000;
-      else if(a==='shop'){ ROPES.forEach(r=>{ if(!save.own.includes(r.id)) save.own.push(r.id); }); SKINS.forEach(k=>{ if(!save.own.includes(k.id)) save.own.push(k.id); }); }
-      S.m=mOf(save.mp); setShirt(S.m<0.6||save.skin==='gala'); persist(); refresh(); toast('Admin: hecho');
-    });
-  }
-  function open(){
-    if(pn.classList.contains('on')){ pn.classList.remove('on'); return; }
-    if(ADM.on){ draw(); pn.classList.add('on'); return; }
-    const w=SEC.bloqueado(); if(w){ alert('Demasiados intentos. Espera '+w+' s.'); return; }
-    const t=prompt('Contraseña de administrador'); if(t===null) return;
-    if(SEC.admin(t)){ ADM.on=1; draw(); pn.classList.add('on'); } else alert(SEC.bloqueado()?'Demasiados intentos. Espera 1 minuto.':'Contraseña incorrecta');
-  }
-  addEventListener('keydown',e=>{ if(e.code==='F2'){ e.preventDefault(); open(); } });
-  let n=0,t0=0; const k=document.querySelector('#title .kick');
-  if(k) k.addEventListener('click',()=>{ const now=performance.now(); n=now-t0<700?n+1:1; t0=now; if(n>=5){ n=0; open(); } });
-})();
 </script>
 <script src="mejoras.js"></script>
 </body></html>
