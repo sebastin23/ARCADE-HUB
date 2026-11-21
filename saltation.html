@@ -1,7 +1,9 @@
-<!doctype html><html><head>
-<link rel="icon" type="image/png" href="hub-icono.png"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="es">
+<head>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%95%B9%EF%B8%8F%3C/text%3E%3C/svg%3E"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <title>Saltation</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;600&family=Big+Shoulders+Stencil+Display:wght@700;900&display=swap">
@@ -92,6 +94,8 @@ h2{font-family:var(--f-display);font-weight:900;font-size:40px;line-height:1;mar
 .it .sw{display:flex;gap:4px}.it .sw i{width:22px;height:22px;display:block;border:1px solid #000}
 .it button{justify-self:start}.fill.d{transition:none}
 </style>
+</head>
+<body>
 <canvas id="gl"></canvas>
 <div id="flash"></div>
 <div id="ui">
@@ -165,6 +169,7 @@ h2{font-family:var(--f-display);font-weight:900;font-size:40px;line-height:1;mar
   <p class="help">Ganas 1 moneda por salto limpio (2 si es perfecto). Las cuerdas pesadas te hacen musculoso más rápido, pero giran más rápido.</p></div></div>
 <div id="cine" hidden><div class="lb t"></div><div class="lb b"></div><div id="cap"></div><button class="ghost" id="skip">Saltar ▸</button></div>
 <div id="fatal" hidden><p>No se pudo iniciar el motor 3D en este navegador. Prueba con otro navegador o activa la aceleración por hardware.</p></div>
+<script src="registro-errores.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){'use strict';

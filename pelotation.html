@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es"><head>
-<link rel="icon" type="image/png" href="hub-icono.png"><meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%95%B9%EF%B8%8F%3C/text%3E%3C/svg%3E"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pelotation — Demolición de cajas</title>
 <style>
@@ -17,6 +17,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <canvas id="c"></canvas><div id="cross"></div><div id="msg"></div>
 <div id="hud"><b id="score">0 / 0</b> cajas derribadas<br>
 WASD mover · ratón mirar (clic para capturar)<br>Clic / Espacio: disparar · R: reiniciar<br>Flechas: mirar · N: siguiente nivel<br>Derriba el 85% con 14 bolas · Móvil: izq. mover, der. mirar/tocar disparar</div>
+<script src="registro-errores.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 <script>

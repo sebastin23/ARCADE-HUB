@@ -600,6 +600,7 @@
 
 <div id="glitchOverlay"></div>
 
+<script src="registro-errores.js"></script>
 <script src="seguridad.js"></script>
 <script>
 (() => {
@@ -710,6 +711,7 @@
   const PUNISH_COUNT_KEY = 'snake_punish_count';
   const BANNED_KEY = 'snake_banned';
   const PERMA_BANNED_KEY = 'snake_perma_banned';
+  const PERDON_UNTIL_KEY = 'snake_perdon_until';
 
   function checkForBan() {
       if (localStorage.getItem(PERMA_BANNED_KEY) === 'true') {
@@ -1136,32 +1138,47 @@
       }
   }
 
-  function startDizzyMode() {
-      alert("CÓDIGO ACEPTADO. Tienes 20 segundos para introducir el código 'perdon' en el menú de trucos. Date prisa.");
-      
-      initGame(1);
+  function startDizzyMode(msLeft) {
+      const left = msLeft || 20000;
+      if (!msLeft) {
+          alert("CÓDIGO ACEPTADO. Tienes 20 segundos para introducir el código 'perdon' en el menú de trucos. Date prisa.");
+      }
+      // La hora límite se guarda: recargar la página no reinicia la cuenta atrás.
+      localStorage.setItem(PERDON_UNTIL_KEY, String(Date.now() + left));
+      localStorage.setItem('awaiting_perdon_check', 'true');
       isAwaitingPerdon = true;
-      
+      gameRunning = false;
+
+      // El campo de trucos vive en la pantalla de inicio: hay que mantenerla visible.
+      banOverlay.style.display = 'none';
+      startOverlay.style.display = 'flex';
       cheatInput.style.display = 'block';
       btnCheat.style.display = 'block';
-      
+      info.textContent = 'Introduce "perdon" rápido...';
+
       dizzyInterval = setInterval(() => {
-          const rotation = (Math.random() - 0.5) * 20; // -10 to +10 degrees
-          const hue = Math.random() * 120; // green to yellow to red-ish
-          canvas.style.transform = `rotate(${rotation}deg)`;
-          canvas.style.filter = `hue-rotate(${hue}deg)`;
+          const rotation = (Math.random() - 0.5) * 20; // -10 a +10 grados
+          const hue = Math.random() * 120;
+          startOverlay.style.transform = `rotate(${rotation}deg)`;
+          startOverlay.style.filter = `hue-rotate(${hue}deg)`;
       }, 700);
-      
+
       perdonTimer = setTimeout(() => {
           if (isAwaitingPerdon) {
              isAwaitingPerdon = false;
              localStorage.setItem(PERMA_BANNED_KEY, 'true');
+             localStorage.removeItem('awaiting_perdon_check');
+             localStorage.removeItem(PERDON_UNTIL_KEY);
              triggerGlitchAndPermaBan();
           }
-      }, 20000);
+      }, left);
   }
 
   function initGame(appleCount = 1) {
+    if (isAwaitingPerdon) {
+        alert("Primero escribe el código 'perdon' antes de que se acabe el tiempo.");
+        return;
+    }
     if (movementFrozen) {
         alert("No puedes jugar, tu movimiento está bloqueado por la sanción 3.");
         return;
@@ -1470,6 +1487,10 @@
     const codeId = SEC.snake(plainCode);
 
     if (codeId) {
+        if (codeId !== 'perdon' && (isAwaitingPerdon || (parseInt(localStorage.getItem(PUNISH_COUNT_KEY)) || 0) > 0)) {
+            alert("Tienes sanciones activas. Solo funciona el código 'perdon'.");
+            return;
+        }
         switch(codeId) {
             case 'infinito': // infinito oro
                 gold = Number.MAX_SAFE_INTEGER; 
@@ -1479,28 +1500,32 @@
                 invincible = true; 
                 localStorage.setItem(STORAGE_INVINCIBLE, 'true'); 
                 break;
-            case 'perdon': // perdon
-                if (isAwaitingPerdon) {
-                    clearTimeout(perdonTimer);
-                    clearInterval(dizzyInterval);
-                    canvas.style.transform = 'none';
-                    canvas.style.filter = 'none';
-                    isAwaitingPerdon = false;
-                    localStorage.removeItem('awaiting_perdon_check');
-                    localStorage.removeItem(PUNISH_COUNT_KEY);
-                    if(realGold < 0) realGold = 0;
-                    gold = realGold;
-                    localStorage.setItem(STORAGE_GOLD, realGold.toString());
-                    unlockedSkinsGlobal = { default: true };
-                    localStorage.setItem(STORAGE_SKINS, JSON.stringify(unlockedSkinsGlobal));
-                    movementFrozen = false;
-                    resetAllCheats();
-                    alert("¡PERDÓN CONCEDIDO! Todas las sanciones han sido eliminadas. ¡Juega con responsabilidad!");
-                    showStartScreen();
-                } else {
-                    alert("Este código no tiene efecto en este momento.");
+            case 'perdon': {
+                const pc = parseInt(localStorage.getItem(PUNISH_COUNT_KEY)) || 0;
+                if (!isAwaitingPerdon && pc === 0) {
+                    alert("No tienes ninguna sanción que perdonar.");
+                    return;
                 }
-                return; // Return to avoid double alert
+                clearTimeout(perdonTimer);
+                clearInterval(dizzyInterval);
+                startOverlay.style.transform = 'none';
+                startOverlay.style.filter = 'none';
+                canvas.style.transform = 'none';
+                canvas.style.filter = 'none';
+                isAwaitingPerdon = false;
+                localStorage.removeItem('awaiting_perdon_check');
+                localStorage.removeItem(PERDON_UNTIL_KEY);
+                localStorage.removeItem(PUNISH_COUNT_KEY);
+                localStorage.removeItem(BANNED_KEY);
+                if (realGold < 0) realGold = 0;
+                localStorage.setItem(STORAGE_GOLD, realGold.toString());
+                movementFrozen = false;
+                info.textContent = '';
+                resetAllCheats();
+                alert("¡PERDÓN CONCEDIDO! Todas las sanciones han sido eliminadas. Tu oro negativo vuelve a 0 y conservas tus skins. ¡Juega con responsabilidad!");
+                showStartScreen();
+                return; // evita el aviso de "código activado"
+            }
             case 'x2': // x2
                 doubleGrowActive = true; 
                 localStorage.setItem(STORAGE_DOUBLE_GROW, 'true'); 
@@ -1520,6 +1545,7 @@
         let punishCount = (parseInt(localStorage.getItem(PUNISH_COUNT_KEY)) || 0) + 1;
         localStorage.setItem(PUNISH_COUNT_KEY, punishCount);
         if (punishCount === 1) {
+            resetAllCheats(); // quita oro infinito y demás trucos: la sanción es real
             realGold = -5000;
             gold = realGold;
             localStorage.setItem(STORAGE_GOLD, realGold.toString());
@@ -1527,6 +1553,8 @@
         } else if (punishCount === 2) {
             unlockedSkinsGlobal = { default: true };
             localStorage.setItem(STORAGE_SKINS, JSON.stringify(unlockedSkinsGlobal));
+            selectedSkin = 'default';
+            localStorage.setItem(STORAGE_SELECTED_SKIN, 'default');
             alert("Sanción 2: Todas tus skins han sido eliminadas.");
         } else if (punishCount === 3) {
             movementFrozen = true;
@@ -1595,8 +1623,19 @@
   if (!checkForBan()) {
       initFromStorage();
       if(localStorage.getItem('awaiting_perdon_check') === 'true'){
-          localStorage.removeItem('awaiting_perdon_check');
-          startDizzyMode();
+          const until = parseInt(localStorage.getItem(PERDON_UNTIL_KEY)) || 0;
+          const left = until - Date.now();
+          if (!until) {
+              startDizzyMode();
+          } else if (left > 0) {
+              startDizzyMode(left);
+          } else {
+              // se acabó el tiempo mientras la página estaba cerrada
+              localStorage.setItem(PERMA_BANNED_KEY, 'true');
+              localStorage.removeItem('awaiting_perdon_check');
+              localStorage.removeItem(PERDON_UNTIL_KEY);
+              checkForBan();
+          }
       }
   }
 })();

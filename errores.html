@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>Errores del hub · ARCADE-HUB</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%90%9E%3C/text%3E%3C/svg%3E">
+<style>body{font-family:system-ui,sans-serif;background:#12102e;color:#fff;max-width:760px;margin:0 auto;padding:20px}
+button{font:inherit;padding:10px 16px;border:0;border-radius:8px;background:#ffe14a;font-weight:700;cursor:pointer;margin:0 8px 12px 0}
+.e{background:#1d1a4a;border-left:4px solid #ff5a5a;border-radius:6px;padding:10px 12px;margin:8px 0;word-break:break-word}
+.e small{color:#aab;display:block}a{color:#8cf}</style></head><body>
+<h1>🐞 Errores del hub</h1>
+<p><small>Errores de JavaScript guardados en este navegador. Los de extensiones no se apuntan. <a href="index.html">Volver al hub</a></small></p>
+<button id="c">Copiar todo</button><button id="b">Borrar</button>
+<div id="l"></div>
+<script>
+(function(){
+  var K='hub_errores',l=document.getElementById('l'),a=[];
+  try{a=JSON.parse(localStorage.getItem(K)||'[]')}catch(e){}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  l.innerHTML=a.length?a.slice().reverse().map(function(x){
+    return '<div class="e"><b>'+esc(x.m)+'</b>'+(x.n>1?' <em>(×'+x.n+')</em>':'')+'<small>'+esc(x.p)+' · '+esc(x.f||'script en línea')+(x.l?':'+x.l+':'+x.c:'')+' · '+new Date(x.t).toLocaleString()+'</small></div>'}).join(''):'<p>✅ Sin errores registrados.</p>';
+  document.getElementById('b').onclick=function(){try{localStorage.removeItem(K)}catch(e){}location.reload()};
+  document.getElementById('c').onclick=function(){var t=a.map(function(x){return x.p+' | '+x.m+' | '+x.f+':'+x.l+' | '+new Date(x.t).toISOString()+(x.n>1?' x'+x.n:'')}).join('\n')||'Sin errores';
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){alert('Copiado')},function(){prompt('Copia esto:',t)})};
+})();
+</script></body></html>

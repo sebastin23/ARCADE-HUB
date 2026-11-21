@@ -87,8 +87,8 @@
       .talent-card.locked h3, .talent-card.locked p { color: #777; }
       .talent-card.locked .cost, .talent-card.locked .level { color: #555; }
       .talent-req { position: absolute; top: -10px; left: -10px; background: #c0392b; color: white; padding: 2px 5px; font-size: 0.7em; border-radius: 5px;}
-      .settings-option { display: flex; justify-content: space-between; align-items: center; max-width: 400px; margin: 20px auto; font-size: 1.2em; }
-      .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+      .settings-option { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 400px; margin: 20px auto; font-size: 1.2em; }
+      .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; flex-shrink: 0; }
       .toggle-switch input { opacity: 0; width: 0; height: 0; }
       .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
       .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
@@ -370,3 +370,7 @@
 
 /* Logo pequeño arriba a la izquierda */
 #site-logo { position: fixed; top: 10px; left: 10px; width: 48px; height: 48px; z-index: 40; pointer-events: none; image-rendering: pixelated; border-radius: 10px; }
+
+#color-swatches { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+#settings-menu .menu-content { max-height: 92vh; overflow-y: auto; }
+#settings-menu .menu-content { max-width: 480px; }
