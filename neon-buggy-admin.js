@@ -331,14 +331,16 @@ function xaResetAll(){xaStop();for(const k in XD)XP[k]=XD[k];XA.tsE=1;XA.camMode
 function admGate(ok){
   const pn=$('adm');if(pn.classList.contains('on')){ok();return}
   if($('agate'))return;
+  const rel=()=>{for(const k in keys)keys[k]=0;if(typeof touchKeysReset==='function')touchKeysReset()};   // suelta teclas pegadas (p. ej. la A del Konami)
+  rel();
   const d=mk('div');d.id='agate';
   d.innerHTML="<div class='agb'><b>🔒 ADMIN</b><input class='inp' id='agin' type='password' autocomplete='off' placeholder='Contraseña'><p id='agm'></p><div class='cs2'><button class='go alt' id='agx'>CANCELAR</button><button class='go' id='ago'>ENTRAR</button></div></div>";
   document.body.appendChild(d);const inp=$('agin'),m=$('agm');inp.focus();
-  const close=()=>d.remove();
+  const close=()=>{d.remove();rel()};
   const go=()=>{const w=SEC.bloqueado();if(w){m.textContent='Demasiados intentos. Espera '+w+' s.';return}
-    if(SEC.admin(inp.value)){close();ok()}else{m.textContent=SEC.bloqueado()?'Demasiados intentos. Espera 1 min.':'Contraseña incorrecta';inp.value='';inp.focus()}};
+    if(SEC.admin(inp.value)){close();rel();ok()}else{m.textContent=SEC.bloqueado()?'Demasiados intentos. Espera 1 min.':'Contraseña incorrecta';inp.value='';inp.focus()}};
   $('ago').onclick=go;$('agx').onclick=close;inp.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')go();else if(e.key==='Escape')close()};
-  inp.onkeyup=e=>e.stopPropagation()}
+  inp.onkeyup=e=>{if(e.key==='Enter')e.stopPropagation()}}
 /* panel admin: código Konami */
 {let kb=[];const pn=$('adm'),g=id=>$(id),sl=g('aspd'),sn=g('aspdn'),ck=g('ainv');
   const sync=src=>{

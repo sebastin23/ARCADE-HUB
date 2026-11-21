@@ -30,6 +30,8 @@ if(!CARS[sel])sel=0;let CP=CARS[sel];
 /* ---------- audio ---------- */
 let AC,eng,engG,mg;
 function initAudio(){try{if(AC)return;AC=new(window.AudioContext||window.webkitAudioContext)();{const _d=AC.destination;mg=AC.createGain();mg.gain.value=(typeof SET!=='undefined')?SET.vol:1;mg.connect(_d);Object.defineProperty(AC,'destination',{value:mg,configurable:true})}eng=AC.createOscillator();engG=AC.createGain();const f=AC.createBiquadFilter();f.frequency.value=500;eng.type='sawtooth';engG.gain.value=.02;eng.connect(f);f.connect(engG);engG.connect(AC.destination);eng.start()}catch(e){}}
+/* el motor solo suena jugando: antes se quedaba zumbando al acabar la partida */
+function engVol(){try{if(engG&&AC)engG.gain.setTargetAtTime(st==='play'&&!paused?.02:0,AC.currentTime,.08)}catch(e){}}
 function snd(f,d,t,v,s){try{if(!AC)return;const n=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=t||'square';o.frequency.setValueAtTime(f,n);o.frequency.exponentialRampToValueAtTime(Math.max(30,f+(s||0)),n+d);g.gain.setValueAtTime(v||.06,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(n+d)}catch(e){}}
 function nz(t0,f0,f1,dur,v,q){const n=AC.currentTime+t0,len=Math.max(1,AC.sampleRate*dur|0),buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.5);const s=AC.createBufferSource();s.buffer=buf;const f=AC.createBiquadFilter();f.type='bandpass';f.Q.value=q||3;f.frequency.setValueAtTime(f0,n);f.frequency.exponentialRampToValueAtTime(f1,n+dur);const g=AC.createGain();g.gain.value=v;s.connect(f);f.connect(g);g.connect(AC.destination);s.start(n)}
 /* aplastar una fruta: chapoteo húmedo en varias salpicaduras + golpe blando */
@@ -297,7 +299,7 @@ function frame(){requestAnimationFrame(frame);const rdt=Math.min(clk.getDelta(),
     cam.position.set(camP.x+(Math.random()-.5)*shake*XP.shk,camP.y+(Math.random()-.5)*shake*XP.shk,camP.z);cam.lookAt(car.x*(admin.free?1:.9),car.y*.5+1.3,car.z-14)}
   const f=62+XP.fovAdd+Math.min(28,Math.max(0,speed-90)/80)+Math.min(speed,90)*.3+((keys.KeyW||keys.ArrowUp)&&nitro>0&&st==='play'?6:0);cam.fov+=(f-cam.fov)*.08;cam.updateProjectionMatrix();
   sun.position.set(car.x-14,30,car.z+10);sun.target.position.set(car.x,0,car.z);
-  if(st==='cine')cineTick(dt,t);monUpd(dt,t);bombUpd(dt,t);fxUpd(dt,t);raceTick(dt,t);ghostTick(dt);tutTick(dt);R.render(S,cam)}
+  if(st==='cine')cineTick(dt,t);monUpd(dt,t);bombUpd(dt,t);fxUpd(dt,t);raceTick(dt,t);ghostTick(dt);tutTick(dt);engVol();R.render(S,cam)}
 addEventListener('error',e=>{const h=$('hint');h.style.display='block';h.textContent='Error: '+e.message});
 /* ---- skins, garaje, pase y enemigos ---- */
 const mcache={},mbc={},mglc={};

@@ -152,19 +152,21 @@ h2{font-family:var(--f-display);font-weight:900;font-size:40px;line-height:1;mar
 </div>
 
 <div class="wrap" id="over" hidden>
-  <div class="panel">
+  <div class="panel res">
     <div class="stripe"></div>
     <div class="kick" id="oKick">Fin de la tanda</div>
     <h2 id="oTitle">La cuerda te ha enganchado</h2>
-    <div class="stats">
-      <div><b id="oJumps">0</b><span class="lbl">saltos</span></div>
-      <div><b id="oScore">0</b><span class="lbl">puntos</span></div>
-      <div><b id="oCombo">0</b><span class="lbl">racha</span></div>
-      <div><b id="oMus">+0%</b><span class="lbl">músculo</span></div>
+    <div class="tiles">
+      <div class="tile big"><b id="oJumps">0</b><span class="lbl">saltos</span></div>
+      <div class="tile"><b id="oScore">0</b><span class="lbl">puntos</span></div>
+      <div class="tile"><b id="oCombo">0</b><span class="lbl">racha</span></div>
+      <div class="tile"><b id="oMus">+0%</b><span class="lbl">músculo</span></div>
+      <div class="tile"><b id="oCoins">+0</b><span class="lbl">monedas</span></div>
     </div>
+    <div class="oinj"><span class="lbl">Tobillos</span><b id="oInj">Sanos</b></div>
     <p class="lore" id="oNote"></p>
-    <div class="row">
-      <button class="btn" id="btnAgain">Otra vez</button>
+    <button class="btn wide" id="btnAgain">Otra vez</button>
+    <div class="row two">
       <button class="ghost" id="btnMenu">Menú</button>
       <button class="ghost" id="btnShop2">Tienda</button>
     </div>
@@ -179,6 +181,7 @@ h2{font-family:var(--f-display);font-weight:900;font-size:40px;line-height:1;mar
 <div id="cine" hidden><div class="lb t"></div><div class="lb b"></div><div id="cap"></div><button class="ghost" id="skip">Saltar ▸</button></div>
 <div id="fatal" hidden><p>No se pudo iniciar el motor 3D en este navegador. Prueba con otro navegador o activa la aceleración por hardware.</p></div>
 <script src="registro-errores.js"></script>
+<script src="seguridad.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){'use strict';
@@ -226,7 +229,9 @@ if(typeof save.inj!=='number'||!isFinite(save.inj)) save.inj=0;
 { const now=Date.now(), h=Math.max(0,(now-(save.injT||now))/36e5); save.inj=Math.max(0,save.inj-h*8); save.injT=now; }   // -8 % por hora real
 const injLvl=v=>v>=70?3:v>=45?2:v>=20?1:0, INJN=['Sanos','Magullados','Heridos','Destrozados'];
 const INJMSG=['','Se te empiezan a magullar los tobillos','Tienes los tobillos heridos: saltas menos','¡Tobillos destrozados! Véndatelos o descansa'];
-const unlockedCount=()=>CH.filter(c=>save.total>=c.unlock).length;
+/* estado del modo admin (se activa con contraseña; no se guarda) */
+const ADM={on:0,imm:0,gold:0,noinj:0,all:0,slow:1};
+const unlockedCount=()=>ADM.all?CH.length:CH.filter(c=>save.total>=c.unlock).length;
 
 /* ---------- audio ---------- */
 const AU={ctx:null,m:null,nb:null,mute:false};
@@ -473,6 +478,7 @@ function injApply(){
   for(let i=0;i<2;i++){ INJ.m[i].visible=l>=1; INJ.g[i].visible=l>=2; INJ.b[i].visible=l>=3; }
 }
 function injAdd(v){
+  if(ADM.noinj&&v>0) return;
   const o=injLvl(save.inj); save.inj=Math.max(0,Math.min(100,save.inj+v)); save.injT=Date.now();
   const n=injLvl(save.inj); if(n!==o){ injApply(); if(n>o) toast(INJMSG[n]); }
 }
@@ -961,7 +967,7 @@ function updHud(){
 function resetRun(){
   Object.assign(S,{y:0,vy:0,onGround:true,held:false,heldFor:0,buf:0,boost:0,land:0,lives:3,combo:0,bestCombo:0,score:0,runJumps:0,perfects:0,grace:0,tangle:0,stumble:0});
   S.dbl={state:0,left:0,timer:0,next:12+Math.floor(Math.random()*6)};
-  S.mStart=save.mp; S.unlocked=unlockedCount();
+  S.mStart=save.mp; S.unlocked=unlockedCount(); S.c0=save.coins;
 }
 function startRun(ci){
   auInit(); save.chapter=ci;
@@ -977,7 +983,7 @@ function endRun(why){
   S.mode='over'; S.tangle=999; musStop(); save.runs++;
   save.best=Math.max(save.best,S.runJumps); save.bestCombo=Math.max(save.bestCombo,S.bestCombo); persist();
   setTimeout(()=>{
-    $('oJumps').textContent=S.runJumps; $('oScore').textContent=S.score; $('oCombo').textContent=S.bestCombo;
+    $('oJumps').textContent=S.runJumps; $('oScore').textContent=S.score; $('oCoins').textContent='+'+Math.max(0,ADM.gold?0:save.coins-(S.c0||0)); { const il=injLvl(save.inj); $('oInj').textContent=INJN[il]+' · '+Math.round(save.inj)+'%'; $('oInj').style.color=['var(--ok)','#b58bd0','var(--rust)','#e03030'][il]; } $('oCombo').textContent=S.bestCombo;
     const gain=Math.round((mOf(save.mp)-mOf(S.mStart))*100); $('oMus').textContent='+'+gain+'%';
     const nu=unlockedCount(); let note='';
     if(S.runJumps>0&&S.runJumps>=save.best) note='Mejor tanda hasta ahora. ';
@@ -999,7 +1005,7 @@ function onBottom(){
   if(S.mode!=='play'||S.grace>0) return;
   slap();
   const y=S.y;
-  if(y<0.085){ hit(); return; }
+  if(y<0.085&&!ADM.imm){ hit(); return; }   // admin inmortal: la cuerda no te toca
   S.runJumps++; save.total++; save.mp+=ropeOf().mus; save.coins+=1+(y>0.30?1:0); S.combo++; S.bestCombo=Math.max(S.bestCombo,S.combo); S.pump=1;
   let pts=10, kind='';
   if(y>0.30){ kind='perfect'; pts+=10; S.perfects++; } else if(y<0.15){ kind='graze'; }
@@ -1032,10 +1038,11 @@ function takeoff(){
 }
 function step(dt){
   S.t+=dt;
+  if(ADM.gold&&save.coins<99999999) save.coins=99999999;
   if(S.mode==='play') injAdd(dt*0.12);   // desgaste por el tiempo saltando: ~1 % cada 8 s
   const ch=CH[S.chapter];
   /* velocidad de cuerda */
-  const wt=wTarget(), acc=14*dt; S.omega+=clamp(wt-S.omega,-acc*1.4,acc);
+  const wt=wTarget()*ADM.slow, acc=14*dt; S.omega+=clamp(wt-S.omega,-acc*1.4,acc);
   if(S.tangle>0){ if(S.mode!=='over') S.tangle-=dt; const tg=Math.round((S.phi+Math.PI/2)/TAU)*TAU-Math.PI/2; S.phi+=(tg-S.phi)*Math.min(1,6*dt); }
   S.phi-=S.omega*dt;
   if(S.grace>0) S.grace-=dt;
@@ -1091,7 +1098,7 @@ let sel=0;
 function refreshMenu(){
   const box=$('chaps'); box.innerHTML='';
   CH.forEach((c,i)=>{
-    const ok=save.total>=c.unlock, b=document.createElement('button');
+    const ok=ADM.all||save.total>=c.unlock, b=document.createElement('button');
     b.className='cb'; b.disabled=!ok; b.setAttribute('aria-pressed',String(i===sel&&ok));
     b.innerHTML='<b></b><span></span>'; b.firstChild.textContent=c.name;
     b.lastChild.textContent=ok?c.sub:'Con '+c.unlock+' saltos';
@@ -1174,12 +1181,24 @@ requestAnimationFrame(frame);
 #sboot .pb{width:min(280px,70vw);height:10px;background:var(--steel-600);overflow:hidden}
 #sboot .pb i{display:block;height:100%;width:0;background:var(--crane);transition:width .3s}
 #shop,#over{justify-content:center;background:radial-gradient(ellipse at center,rgba(13,17,21,.45),rgba(13,17,21,.93));backdrop-filter:blur(5px)}
-#over .panel{background:transparent;box-shadow:none;max-width:720px;text-align:center}
-#over .stripe{display:none}
-#over .stats{justify-content:center}
-#over .row{flex-direction:column;align-items:stretch;max-width:340px;margin-inline:auto}
-#over .btn{font-size:36px;border-radius:999px}
-#over .ghost{padding:12px;border-radius:999px;font-size:15px;background:rgba(255,255,255,.05)}
+#over{background:rgba(8,10,13,.7)}
+#over .panel.res{max-width:460px;margin-inline:auto;text-align:center;background:var(--steel-800);border:1px solid var(--steel-600);box-shadow:0 24px 70px rgba(0,0,0,.65);padding-bottom:20px}
+#over .stripe{display:block;margin-bottom:16px}
+#over h2{font-size:clamp(30px,6vw,40px);color:var(--crane);margin-bottom:14px;padding:0 6px}
+#over .kick{margin-bottom:6px}
+#over .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+#over .tile{background:var(--steel-600);padding:10px 4px;display:flex;flex-direction:column;gap:2px;align-items:center}
+#over .tile.big{grid-column:1/-1;background:#0d1115;padding:12px}
+#over .tile b{font-family:var(--f-display);font-weight:900;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+#over .tile.big b{font-size:64px;color:var(--chalk)}
+#over .tile .lbl{font-size:11px}
+#over .oinj{display:flex;gap:10px;align-items:baseline;justify-content:center;margin-bottom:8px}
+#over .oinj b{font-family:var(--f-label);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:14px}
+#over .lore{font-size:13.5px;margin-inline:auto;margin-bottom:14px;color:#c9c4b6}
+#over .btn.wide{width:100%;font-size:32px;margin-bottom:10px}
+#over .row.two{flex-wrap:nowrap}#over .row.two .ghost{flex:1;padding:10px 8px;font-size:13px}
+#over .ghost:hover{border-color:var(--crane);color:var(--chalk)}
+@media (max-width:640px){#over{align-items:flex-end}#over .panel.res{max-width:100%}#over .tile.big b{font-size:52px}}
 /* ---- menú principal: tarjeta compacta, deja ver al personaje ---- */
 #title{justify-content:flex-start;background:linear-gradient(90deg,rgba(13,17,21,.82) 0,rgba(13,17,21,.35) 55%,transparent 80%)}
 #title .panel.menu{background:rgba(21,27,33,.92);border-left:6px solid var(--crane);max-width:420px;padding:20px 0 18px;text-align:left;box-shadow:0 16px 50px rgba(0,0,0,.55)}
@@ -1230,6 +1249,50 @@ document.addEventListener('DOMContentLoaded',()=>{
  set('#shop h2','Shop');set('#tabRope b','Ropes');set('#tabRope span','More muscle, more speed');set('#tabSkin b','Skins');set('#tabSkin span','Change your outfit');
  const sh=q('#shop .help');if(sh)sh.textContent='You earn 1 coin per clean jump (2 if perfect). Heavy ropes build muscle faster, but spin faster.';
 });})();
+</script>
+<script>
+/* ---------- ADMIN de Cuerda de Acero ----------
+   Se abre con F2 o tocando 5 veces el rótulo "Puerto Hierro" del menú. Pide la contraseña de admin (ver seguridad.js). */
+(()=>{
+  const css=document.createElement('style');
+  css.textContent='#adm{position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:60;width:min(300px,calc(100vw - 20px));max-height:calc(100vh - 20px);overflow-y:auto;background:rgba(13,17,21,.96);border:1px solid var(--crane);padding:10px 12px;font-family:var(--f-label);font-size:13px;letter-spacing:.06em;text-transform:uppercase;display:none}#adm.on{display:block}#adm h3{margin:0 0 8px;font-family:var(--f-display);font-size:20px;color:var(--crane);display:flex;justify-content:space-between;align-items:center}#adm .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}#adm button{background:var(--steel-600);border:1px solid transparent;padding:8px 6px;color:var(--chalk);font:inherit;letter-spacing:.05em}#adm button.on{border-color:var(--ok);color:var(--ok)}#adm button:hover{border-color:var(--crane)}#adm .sec{color:var(--steel-400);font-size:11px;margin:8px 0 4px}#adm .x{padding:2px 8px}';
+  document.head.appendChild(css);
+  const pn=document.createElement('div');pn.id='adm';document.body.appendChild(pn);
+  const refresh=()=>{ if(typeof refreshMenu==='function') refreshMenu(); updHudForce(); };
+  const updHudForce=()=>{ H.m=-1; H.inj=-1; };
+  const tog=(k,label)=>`<button data-t="${k}" class="${ADM[k]?'on':''}">${label}</button>`;
+  function draw(){
+    pn.innerHTML=`<h3>⚡ ADMIN <button class="x" id="axc">✕</button></h3>
+    <div class="sec">Modos</div><div class="g">${tog('imm','Inmortal')}${tog('gold','Oro infinito')}${tog('noinj','Sin lesiones')}${tog('all','Todos los capítulos')}</div>
+    <div class="sec">Fuerza</div><div class="g"><button data-a="mus+">+100 músculo</button><button data-a="musmax">Titán (máx.)</button><button data-a="mus0">Flaco (0)</button><button data-a="heal">Curar tobillos</button></div>
+    <div class="sec">Progreso</div><div class="g"><button data-a="j100">+100 saltos</button><button data-a="j1000">+1000 saltos</button><button data-a="shop">Desbloquear tienda</button><button data-a="coins">+10000 monedas</button></div>
+    <div class="sec">Ir al capítulo</div><div class="g">${CH.map((c,i)=>`<button data-c="${i}">${i+1}. ${c.name}</button>`).join('')}</div>
+    <div class="sec">Velocidad de la cuerda</div><div class="g">${[[1,'Normal'],[.75,'×0.75'],[.5,'×0.5'],[1.3,'×1.3']].map(([v,l])=>`<button data-s="${v}" class="${ADM.slow===v?'on':''}">${l}</button>`).join('')}</div>`;
+    pn.querySelector('#axc').onclick=()=>pn.classList.remove('on');
+    pn.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ const k=b.dataset.t; ADM[k]=ADM[k]?0:1; if(k==='noinj'&&ADM[k]){ save.inj=0; injApply(); } if(k==='gold'&&ADM[k]) save.coins=99999999; draw(); refresh(); });
+    pn.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ ADM.slow=+b.dataset.s; draw(); });
+    pn.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.c; ADM.all=1; pn.classList.remove('on'); startRun(i); });
+    pn.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+      const a=b.dataset.a;
+      if(a==='mus+') save.mp+=100; else if(a==='musmax') save.mp=Math.max(save.mp,1500); else if(a==='mus0') save.mp=0;
+      else if(a==='heal'){ save.inj=0; injApply(); }
+      else if(a==='j100'){ save.total+=100; } else if(a==='j1000'){ save.total+=1000; }
+      else if(a==='coins') save.coins+=10000;
+      else if(a==='shop'){ ROPES.forEach(r=>{ if(!save.own.includes(r.id)) save.own.push(r.id); }); SKINS.forEach(k=>{ if(!save.own.includes(k.id)) save.own.push(k.id); }); }
+      S.m=mOf(save.mp); setShirt(S.m<0.6||save.skin==='gala'); persist(); refresh(); toast('Admin: hecho');
+    });
+  }
+  function open(){
+    if(pn.classList.contains('on')){ pn.classList.remove('on'); return; }
+    if(ADM.on){ draw(); pn.classList.add('on'); return; }
+    const w=SEC.bloqueado(); if(w){ alert('Demasiados intentos. Espera '+w+' s.'); return; }
+    const t=prompt('Contraseña de administrador'); if(t===null) return;
+    if(SEC.admin(t)){ ADM.on=1; draw(); pn.classList.add('on'); } else alert(SEC.bloqueado()?'Demasiados intentos. Espera 1 minuto.':'Contraseña incorrecta');
+  }
+  addEventListener('keydown',e=>{ if(e.code==='F2'){ e.preventDefault(); open(); } });
+  let n=0,t0=0; const k=document.querySelector('#title .kick');
+  if(k) k.addEventListener('click',()=>{ const now=performance.now(); n=now-t0<700?n+1:1; t0=now; if(n>=5){ n=0; open(); } });
+})();
 </script>
 <script src="mejoras.js"></script>
 </body></html>
