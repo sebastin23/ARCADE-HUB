@@ -12,6 +12,8 @@ Todos los archivos están en la raíz del repositorio (sin carpetas).
 - `mejoras.js` – script común a varios juegos.
 - `survival-*` – recursos del Survival Shooter; `snake-icono.*` y `neon-buggy-icono.png` – iconos.
 - `politica-privacidad.html` – política de privacidad.
+- `neon-buggy.html` + `neon-buggy.css` + `neon-buggy-juego.js` / `-admin.js` / `-online.js` / `-extras.js` – Neón Buggy (se cargan en ese orden; comparten variables).
+- `seguridad.js` – claves de admin, Konami y trucos de Snake guardadas como hash; `generar-clave.html` crea hashes nuevos (uso local, no subir).
 - `supabase-01…03-*.sql` – base de datos del modo online de Neón Buggy.
 
 ## Añadir un juego
@@ -25,4 +27,4 @@ Ejecuta los SQL **en orden** en *SQL Editor → New query → Run* (una vez cada
 `supabase-01-base.sql`, `supabase-02-solicitudes-amigos.sql`, `supabase-03-guardado-nube.sql`.
 
 En *Authentication → Sign In / Providers*: activa **Allow anonymous sign-ins** y, en **Email**, desactiva **Confirm email**.
-La URL y la clave pública (`sb_publishable_…`) van en `SB_URL` y `SB_KEY` dentro de `neon-buggy.html`.
+La URL y la clave pública (`sb_publishable_…`) van en `SB_URL` y `SB_KEY` dentro de `neon-buggy-online.js`.
