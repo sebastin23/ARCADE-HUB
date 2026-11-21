@@ -118,27 +118,36 @@ h2{font-family:var(--f-display);font-weight:900;font-size:40px;line-height:1;mar
       <div class="mhead"><span class="lbl">Músculo</span><b id="mTier">Flaco</b><span id="mKg">40 kg</span></div>
       <div class="bar"><div class="fill" id="mFill"></div></div>
     </div>
+    <div id="ihud">
+      <div class="mhead"><span class="lbl">Tobillos</span><b id="iTier">Sanos</b><span id="iPct" style="margin-left:auto;font-size:13px">0%</span></div>
+      <div class="bar"><div class="fill" id="iFill"></div></div>
+    </div>
   </div>
 </div>
 
 <div class="wrap" id="title">
-  <div class="panel">
-    <div class="stripe"></div>
+  <div class="panel menu">
     <div class="kick">Puerto Hierro · Torneo del Hierro</div>
     <h1>Cuerda<br>de Acero</h1>
-    <p class="lore">Puerto Hierro ya no huele a mar, huele a óxido y a diésel. Eres Pepita, y tu abuelo Anselmo fue el último campeón del Torneo del Hierro: cinco minutos saltando una cuerda trenzada con cable de grúa sin pisarla una sola vez. Desapareció una noche de tormenta y dejó la cuerda colgada en el patio con una nota: <em>«La cuerda no perdona. Salta.»</em> El torneo vuelve este invierno.</p>
-    <div class="chaps" id="chaps"></div>
     <div class="stats">
       <div><b id="sTotal">0</b><span class="lbl">saltos totales</span></div>
       <div><b id="sCombo">0</b><span class="lbl">mejor racha</span></div>
       <div><b id="sBest">0</b><span class="lbl">mejor tanda</span></div>
     </div>
-    <div class="row">
-      <button class="btn" id="btnPlay">Saltar</button>
+    <div class="sec">Capítulo</div>
+    <div class="chaps" id="chaps"></div>
+    <div class="ankle" id="ankleBox">
+      <div class="ahead"><span class="lbl">Tobillos</span><b id="mIn">Sanos</b><span id="mInP">0%</span></div>
+      <div class="bar"><div class="fill inj" id="mInF"></div></div>
+      <button class="ghost" id="btnHeal">Vendar tobillos · 30 monedas</button>
+    </div>
+    <button class="btn wide" id="btnPlay">Saltar</button>
+    <div class="row two">
       <button class="ghost" id="btnShop">Tienda y cuerdas</button>
       <button class="ghost" id="btnReset">Borrar progreso</button>
     </div>
-    <p class="help"><kbd>Espacio</kbd> o toque para saltar. Salta cuando la cuerda baje. Mantén pulsado para un salto alto: lo necesitarás cuando la cuerda se duplique. Cada salto limpio te hace más fuerte.</p>
+    <details class="story"><summary>La historia</summary><p class="lore">Puerto Hierro ya no huele a mar, huele a óxido y a diésel. Eres Pepita, y tu abuelo Anselmo fue el último campeón del Torneo del Hierro: cinco minutos saltando una cuerda trenzada con cable de grúa sin pisarla una sola vez. Desapareció una noche de tormenta y dejó la cuerda colgada en el patio con una nota: <em>«La cuerda no perdona. Salta.»</em> El torneo vuelve este invierno.</p></details>
+    <p class="help"><kbd>Espacio</kbd> o toque para saltar cuando la cuerda baje. Mantén pulsado para un salto alto (lo necesitarás cuando la cuerda se duplique). Cada salto limpio te hace más fuerte; cada fallo y cada minuto de esfuerzo castigan tus tobillos.</p>
   </div>
 </div>
 
@@ -207,11 +216,16 @@ const kgOf=m=>Math.round(40+m*180);
 
 /* ---------- guardado ---------- */
 const KEY='cuerda-acero-v1';
-const defSave=()=>({total:0,best:0,bestCombo:0,runs:0,chapter:0,mp:0,coins:0,rope:'canamo',skin:'pepita',own:['canamo','pepita'],story:0,intro:0});
+const defSave=()=>({total:0,best:0,bestCombo:0,runs:0,chapter:0,mp:0,coins:0,rope:'canamo',skin:'pepita',own:['canamo','pepita'],story:0,intro:0,inj:0,injT:0});
 let save=defSave();
 try{ const s=localStorage.getItem(KEY); if(s) Object.assign(save,JSON.parse(s)); }catch(e){}
 if(!save.mp) save.mp=save.total; if(!Array.isArray(save.own)||!save.own.length) save.own=['canamo','pepita'];
 const persist=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(save)); }catch(e){} };
+/* ---- tobillos: se lesionan con los fallos y con el tiempo de esfuerzo; se curan con el tiempo real o vendándolos ---- */
+if(typeof save.inj!=='number'||!isFinite(save.inj)) save.inj=0;
+{ const now=Date.now(), h=Math.max(0,(now-(save.injT||now))/36e5); save.inj=Math.max(0,save.inj-h*8); save.injT=now; }   // -8 % por hora real
+const injLvl=v=>v>=70?3:v>=45?2:v>=20?1:0, INJN=['Sanos','Magullados','Heridos','Destrozados'];
+const INJMSG=['','Se te empiezan a magullar los tobillos','Tienes los tobillos heridos: saltas menos','¡Tobillos destrozados! Véndatelos o descansa'];
 const unlockedCount=()=>CH.filter(c=>save.total>=c.unlock).length;
 
 /* ---------- audio ---------- */
@@ -449,6 +463,19 @@ side.forEach((s,i)=>{
   L.foot[i]=mk(new THREE.BoxGeometry(1,1,1),mShoe); L.upper[i]=mk(gLimb,mSkin); L.fore[i]=mk(gLimb,mSkin);
   L.delt[i]=mk(gSph,mSkin); L.bicep[i]=mk(gSph,mSkin); L.fist[i]=mk(gSph,mSkin);
 });
+/* heridas en los tobillos: morado (magullados) → rojo (heridos) → vendaje + sangre (destrozados) */
+const mBruise=stdMat(0x6a3d7c,0.7), mGauze=stdMat(0xf1ece0,0.9), mBlood=stdMat(0xa01212,0.45);
+const INJ={m:[],g:[],b:[],lvl:0};
+side.forEach((s,i)=>{ INJ.m[i]=mk(gSph,mBruise); INJ.g[i]=mk(gLimb,mGauze); INJ.b[i]=mk(gSph,mBlood); [INJ.m[i],INJ.g[i],INJ.b[i]].forEach(o=>{ o.visible=false; o.castShadow=false; }); });
+function injApply(){
+  const l=injLvl(save.inj); INJ.lvl=l;
+  mBruise.color.setHex(l>=2?0x9a2a2a:0x6a3d7c);
+  for(let i=0;i<2;i++){ INJ.m[i].visible=l>=1; INJ.g[i].visible=l>=2; INJ.b[i].visible=l>=3; }
+}
+function injAdd(v){
+  const o=injLvl(save.inj); save.inj=Math.max(0,Math.min(100,save.inj+v)); save.injT=Date.now();
+  const n=injLvl(save.inj); if(n!==o){ injApply(); if(n>o) toast(INJMSG[n]); }
+}
 function setShirt(on){ S.shirt=on; torso.material=on?mShirt:mTorsoSkin; }
 
 const hipV=[new THREE.Vector3(),new THREE.Vector3()], ankV=[new THREE.Vector3(),new THREE.Vector3()], kneeV=[new THREE.Vector3(),new THREE.Vector3()],
@@ -494,6 +521,10 @@ function pose(){
     tmpA.lerpVectors(hipV[i],kneeV[i],0.62); placeLimb(L.shortT[i],hipV[i],tmpA,0.088+0.055*m);
     placeLimb(L.shin[i],kneeV[i],ankV[i],0.05+0.035*m);
     const f=L.foot[i]; f.position.set(ankV[i].x,ankV[i].y-0.03,ankV[i].z+0.07); f.scale.set(0.105,0.075,0.27); f.rotation.x=tuck*0.5;
+    if(INJ.lvl){ const ax=ankV[i].x, ay=ankV[i].y, az=ankV[i].z, k=INJ.lvl;
+      INJ.m[i].position.set(ax+sx*0.012,ay+0.012,az); INJ.m[i].scale.set(0.058+0.008*k,0.04+0.006*k,0.058+0.008*k);
+      INJ.g[i].position.set(ax,ay+0.085,az); INJ.g[i].scale.set(0.06+0.03*m,0.07,0.06+0.03*m);
+      INJ.b[i].position.set(ax+sx*0.045,ay+0.03,az+0.03); INJ.b[i].scale.set(0.022,0.03,0.022); }
   }
   /* brazos */
   for(let i=0;i<2;i++){
@@ -899,7 +930,7 @@ function buildEnv(i){
   applyRope();
 }
 /* ---------- HUD y avisos ---------- */
-const H={jumps:-1,combo:'',lives:-1,m:-1,chap:'',tier:''};
+const H={jumps:-1,combo:'',lives:-1,m:-1,chap:'',tier:'',inj:-1};
 let toastT=0, toastQ=[];
 function banner(a,b,ms,kind){
   const e1=$('b1'), e2=$('b2'); e1.textContent=a; e2.textContent=b||''; e1.className=kind||''; e2.className='';
@@ -922,6 +953,7 @@ function updHud(){
   if(S.lives!==H.lives){ H.lives=S.lives; [...$('hLives').children].forEach((p,i)=>p.classList.toggle('off',i>=S.lives)); }
   const m=Math.round(S.mDisp*1000); if(m!==H.m){ H.m=m; $('mFill').style.width=(S.mDisp*100).toFixed(1)+'%'; $('mKg').textContent=kgOf(S.mDisp)+' kg'; }
   const tr=tierOf(S.mDisp); if(tr!==H.tier){ H.tier=tr; $('mTier').textContent=tr; }
+  const iv=Math.round(save.inj*10); if(iv!==H.inj){ H.inj=iv; const l=injLvl(save.inj); $('iFill').style.width=save.inj.toFixed(1)+'%'; $('iFill').style.background=['var(--ok)','#b58bd0','var(--rust)','#e03030'][l]; $('iTier').textContent=INJN[l]; $('iPct').textContent=Math.round(save.inj)+'%'; }
   const cn=CH[S.chapter].name; if(cn!==H.chap){ H.chap=cn; $('hChap').textContent=cn; }
 }
 
@@ -950,11 +982,12 @@ function endRun(why){
     const nu=unlockedCount(); let note='';
     if(S.runJumps>0&&S.runJumps>=save.best) note='Mejor tanda hasta ahora. ';
     if(nu>S.unlocked){ note+='Capítulo desbloqueado: '+CH[nu-1].name+'. '; $('oKick').textContent='Nuevo capítulo'; $('oTitle').textContent=CH[nu-1].name; } else { $('oKick').textContent='Fin de la tanda'; $('oTitle').textContent='La cuerda te ha enganchado'; }
-    note+='Tu cuerpo ya marca '+kgOf(mOf(save.mp))+' kg de fuerza: '+tierOf(mOf(save.mp)).toLowerCase()+'.';
+    note+='Tobillos: '+INJN[injLvl(save.inj)].toLowerCase()+' ('+Math.round(save.inj)+'%). '; note+='Tu cuerpo ya marca '+kgOf(mOf(save.mp))+' kg de fuerza: '+tierOf(mOf(save.mp)).toLowerCase()+'.';
     if(S.duel){ $('oKick').textContent='Duelo del Hierro'; $('oTitle').textContent=why==='win'?'¡Ganaste al Martón!':'Gana El Martón'; } note+=' Monedas: '+save.coins+'.'; $('oNote').textContent=note; $('over').hidden=false; $('btnAgain').focus({preventScroll:true});
   },1100);
 }
 function hit(){
+  injAdd(14); persist(); if(INJ.lvl>=2) burst(0,0.12,0.05,12,1.3,0.8,0.7,0.05,0.05,-6);
   S.lives--; S.combo=0; S.grace=1.4; S.tangle=1.0; S.stumble=1; S.shake=1; flashRed(); play('hit');
   burst(0,0.2,0.1,18,2.4,0.7,1,0.35,0.15,-4);
   if(S.dbl.state){ S.dbl.state=0; S.dbl.next=S.runJumps+10; }
@@ -995,10 +1028,11 @@ function wTarget(){
   return TAU/2.6;
 }
 function takeoff(){
-  S.vy=V0*(1+0.06*S.mDisp); S.onGround=false; S.boost=0.17; S.buf=0; play('jump');
+  S.vy=V0*(1+0.06*S.mDisp)*(1-0.10*save.inj/100); S.onGround=false; S.boost=0.17; S.buf=0; play('jump');
 }
 function step(dt){
   S.t+=dt;
+  if(S.mode==='play') injAdd(dt*0.12);   // desgaste por el tiempo saltando: ~1 % cada 8 s
   const ch=CH[S.chapter];
   /* velocidad de cuerda */
   const wt=wTarget(), acc=14*dt; S.omega+=clamp(wt-S.omega,-acc*1.4,acc);
@@ -1065,8 +1099,13 @@ function refreshMenu(){
     box.appendChild(b);
   });
   $('sTotal').textContent=save.total; $('sCombo').textContent=save.bestCombo; $('sBest').textContent=save.best;
+  const l=injLvl(save.inj); $('mIn').textContent=INJN[l]; $('mInP').textContent=Math.round(save.inj)+'%';
+  const f=$('mInF'); f.style.width=save.inj.toFixed(1)+'%'; f.className='fill inj'+(l?' l'+l:'');
+  const hb=$('btnHeal'); hb.disabled=save.inj<1||save.coins<30; hb.textContent=save.inj<1?'Tobillos en forma':(save.coins<30?'Vendar · te faltan monedas ('+save.coins+'/30)':'Vendar tobillos · 30 monedas');
 }
+$('btnHeal').addEventListener('click',()=>{ if(save.inj<1||save.coins<30) return; save.coins-=30; save.inj=Math.max(0,save.inj-40); save.injT=Date.now(); injApply(); persist(); refreshMenu(); });
 function showMenu(){
+  { const now=Date.now(), h=Math.max(0,(now-(save.injT||now))/36e5); if(h>0.001){ save.inj=Math.max(0,save.inj-h*8); save.injT=now; injApply(); } }
   sel=Math.min(save.chapter||0,unlockedCount()-1); refreshMenu();
   S.mode='title'; S.cineE=null; S.tangle=0; S.grace=0; S.stumble=0; S.omega=TAU/2.6; S.runJumps=0; S.combo=0; S.lives=3; S.dbl.state=0;
   if(S.chapter!==sel||!curEnv){ S.chapter=sel; buildEnv(sel); }
@@ -1123,7 +1162,7 @@ function frame(now){
 /* ---------- arranque ---------- */
 S.m=mOf(save.mp); S.mDisp=S.m; setShirt(S.m<0.6||save.skin==='gala');
 S.chapter=Math.min(save.chapter||0,unlockedCount()-1);
-applySkin(); applyRope(); buildEnv(S.chapter); resize(); showMenu();
+injApply(); applySkin(); applyRope(); buildEnv(S.chapter); resize(); showMenu();
 requestAnimationFrame(frame);
 })();
 </script>
@@ -1134,17 +1173,37 @@ requestAnimationFrame(frame);
 #sboot b{font-family:var(--f-display);font-size:clamp(40px,10vw,84px);text-transform:uppercase;letter-spacing:.04em;text-align:center;line-height:.95}
 #sboot .pb{width:min(280px,70vw);height:10px;background:var(--steel-600);overflow:hidden}
 #sboot .pb i{display:block;height:100%;width:0;background:var(--crane);transition:width .3s}
-#title,#shop,#over{justify-content:center;background:radial-gradient(ellipse at center,rgba(13,17,21,.45),rgba(13,17,21,.93));backdrop-filter:blur(5px)}
-#title .panel,#over .panel{background:transparent;box-shadow:none;max-width:720px;text-align:center}
-#title .stripe,#over .stripe{display:none}
-#title .stats,#over .stats{justify-content:center}
-#title h1{font-size:clamp(56px,13vw,116px);color:var(--crane)}
-#title .lore{margin-inline:auto;font-size:14px;opacity:.85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
-#title .lore.x{-webkit-line-clamp:unset}
-#title .row{flex-direction:column;align-items:stretch;max-width:340px;margin-inline:auto}
-#title .btn{font-size:36px;border-radius:999px}
-#title .ghost{padding:12px;border-radius:999px;font-size:15px;background:rgba(255,255,255,.05)}
+#shop,#over{justify-content:center;background:radial-gradient(ellipse at center,rgba(13,17,21,.45),rgba(13,17,21,.93));backdrop-filter:blur(5px)}
+#over .panel{background:transparent;box-shadow:none;max-width:720px;text-align:center}
+#over .stripe{display:none}
+#over .stats{justify-content:center}
+#over .row{flex-direction:column;align-items:stretch;max-width:340px;margin-inline:auto}
+#over .btn{font-size:36px;border-radius:999px}
+#over .ghost{padding:12px;border-radius:999px;font-size:15px;background:rgba(255,255,255,.05)}
+/* ---- menú principal: tarjeta compacta, deja ver al personaje ---- */
+#title{justify-content:flex-start;background:linear-gradient(90deg,rgba(13,17,21,.82) 0,rgba(13,17,21,.35) 55%,transparent 80%)}
+#title .panel.menu{background:rgba(21,27,33,.92);border-left:6px solid var(--crane);max-width:420px;padding:20px 0 18px;text-align:left;box-shadow:0 16px 50px rgba(0,0,0,.55)}
+#title h1{font-size:clamp(40px,7vw,60px);color:var(--crane);margin-bottom:12px}
+#title .stats{gap:4px 20px;margin-bottom:14px}
+#title .stats b{font-size:24px}
+#title .sec{font-family:var(--f-label);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--steel-400);margin-bottom:6px}
+#title .chaps{grid-template-columns:repeat(2,1fr);margin-bottom:14px}
+#title .cb{padding:8px 10px}
+#title .ankle{background:var(--steel-600);padding:10px 12px;margin-bottom:14px;display:grid;gap:6px}
+#title .ahead{display:flex;align-items:baseline;gap:8px}
+#title .ahead b{font-family:var(--f-label);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:15px}
+#title .ahead span:last-child{margin-left:auto;font-variant-numeric:tabular-nums;font-size:13px;color:var(--steel-400)}
+.fill.inj{background:var(--ok)}.fill.inj.l1{background:#b58bd0}.fill.inj.l2{background:var(--rust)}.fill.inj.l3{background:#e03030}
+#title .btn.wide{width:100%;font-size:34px;margin-bottom:10px}
+#title .row.two{flex-wrap:nowrap}#title .row.two .ghost{flex:1;padding:10px 8px;font-size:13px}
 #title .ghost:hover,#shop .ghost:hover{border-color:var(--crane);color:var(--chalk)}
+#title .ghost:disabled{opacity:.4;cursor:not-allowed}
+#title .story{margin-bottom:10px}
+#title .story summary{cursor:pointer;font-family:var(--f-label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:var(--steel-400)}
+#title .story .lore{margin-top:8px;font-size:13.5px}
+#title .help{font-size:12px}
+@media (max-width:640px){#title{justify-content:center;align-items:flex-end;background:linear-gradient(0deg,rgba(13,17,21,.7),transparent 70%)}#title .panel.menu{max-width:100%;border-left:0;border-top:6px solid var(--crane);max-height:86%}#title h1{font-size:34px}#title h1 br{display:none}}
+#ihud{margin-top:8px}#ihud .mhead b{font-size:17px}.fill#iFill{background:var(--ok)}
 #shop .panel{max-width:920px;margin:0 auto;border-radius:16px;overflow-x:hidden}
 #shList{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:14px}
 .it{margin-bottom:0!important;border:1px solid var(--steel-400);border-radius:10px;transition:transform .15s,border-color .15s}

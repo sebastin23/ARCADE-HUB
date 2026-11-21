@@ -110,7 +110,7 @@ const zoneOf=i=>ZONES[Math.floor(i/ZC)%ZONES.length];
 const kG=new THREE.Color(),kT=new THREE.Color(),kB=new THREE.Color();let curLi=1,lastZi=-1,walkers=[],blds=[],landers=[],danaDone=false,arrDone=false,cn=null;
 function drawSky(){const c=sk.getContext('2d'),g=c.createLinearGradient(0,0,0,256);g.addColorStop(0,'#'+kT.getHexString());g.addColorStop(.75,'#'+kB.getHexString());g.addColorStop(1,'#'+kB.getHexString());c.fillStyle=g;c.fillRect(0,0,2,256);skT.needsUpdate=true;FOG.color.copy(kB);ground.material.color.copy(kG);hemi.intensity=1.05*curLi*XP.lit;sun.intensity=.95*curLi*XP.lit}
 function zoneSet(i){const z=ZONES[i];kG.copy(z.G);kT.copy(z.T);kB.copy(z.B);curLi=z.li;drawSky()}
-function zoneUpd(dt,d){if(!isFinite(d))d=0;const zi=Math.floor(d/(ZC*L))%ZONES.length,z=ZONES[zi],k=Math.min(1,dt*.9);if(zi!==lastZi){lastZi=zi;pop('📍 '+z.n)}kG.lerp(z.G,k);kT.lerp(z.T,k);kB.lerp(z.B,k);curLi+=(z.li-curLi)*k;drawSky()}
+function zoneUpd(dt,d){if(!isFinite(d))d=0;const zi=Math.floor(d/(ZC*L))%ZONES.length,z=ZONES[zi],k=Math.min(1,dt*.9);if(zi!==lastZi){lastZi=zi;pop('📍 '+(TUT.on?'TUTORIAL NOOB':z.n))}kG.lerp(z.G,k);kT.lerp(z.T,k);kB.lerp(z.B,k);curLi+=(z.li-curLi)*k;drawSky()}
 /* barreras de obra (siempre orientadas igual, sin líneas que parpadeen) */
 const sM={};function stripeMat(w){const k=Math.round(w);return sM[k]=sM[k]||new THREE.MeshStandardMaterial({roughness:.6,map:tex(64,16,c=>{c.fillStyle='#f4f4f4';c.fillRect(0,0,64,16);c.fillStyle='#d8262a';for(let x=-16;x<80;x+=32){c.beginPath();c.moveTo(x,16);c.lineTo(x+16,16);c.lineTo(x+32,0);c.lineTo(x+16,0);c.fill()}},Math.max(1,Math.round(w/2.5)),1)})}
 const mCon=M(0xa9adb2,0,0,.1,.9),mLeg=M(0x6a6f75,0,0,.5,.5),mLamp=M(0xff9a1a,0xff7a00,1.2);
@@ -136,7 +136,7 @@ function sea(z0){const p=new THREE.Mesh(new THREE.PlaneGeometry(100,L),mSea);p.r
 const sc={};function signTex(a,b,bg){const k=a+b+bg;return sc[k]=sc[k]||tex(512,192,c=>{c.fillStyle=bg;c.fillRect(0,0,512,192);c.strokeStyle='#fff';c.lineWidth=8;c.strokeRect(10,10,492,172);c.fillStyle='#fff';c.textAlign='center';c.font='bold 70px Arial,sans-serif';c.fillText(a,256,100,470);c.font='bold 44px Arial,sans-serif';c.fillText(b,256,158,470)},1,1)}
 function gantry(z,a,b,bg){const pm=M(0x8a9098,0,0,.6,.5);[-15.5,15.5].forEach(x=>mesh(gBox,pm,x,6.5,z,.8,13,.8));mesh(gBox,pm,0,12.8,z,32,.5,.6);const p=new THREE.Mesh(new THREE.PlaneGeometry(18,6.75),new THREE.MeshBasicMaterial({map:signTex(a,b,bg)}));p.position.set(0,9.6,z+.4);reg(p)}
 function deco(i,z0){const Z=zoneOf(i),m=i%ZC;
- if(m===0)gantry(z0-2,Z.n,'¡BIENVENIDO!','#1a4aa0');
+ if(m===0)gantry(z0-2,TUT.on?'TUTORIAL NOOB':Z.n,TUT.on?'¡A APRENDER!':'¡BIENVENIDO!','#1a4aa0');
  else if(m===ZC-12||m===ZC-4)gantry(z0-2,'→ '+zoneOf(i+ZC).n,kmTxt(Math.round(((ZC-m)*L-2)/10)*10),'#0a6b3a');
  if(Z.n==='MADRID'){if(m===ZC/2-1)gantry(z0-2,'PUERTA DEL SOL','KILÓMETRO 0 · MADRID','#1a4aa0');if(m===ZC/2)sol(z0-24);if(Math.abs(m-ZC/2)<=1)for(let b=0;b<7;b++)tent(rr(-12,12),z0-rr(2,L-2))}
  for(const q of [-1,1]){const zz=()=>z0-rr(1,L-1);lamp(q*15.8,z0-12);lamp(q*15.8,z0-36);
@@ -179,7 +179,7 @@ const mon=new THREE.Group(),mgr=LM(0x3a9a3a),mrd=M(0xff2020,0xff0000,1);
  mon.userData.l=[-4,4].map(x=>a(gCyl,mgr,x,6,0,2.4,12,2.4))}
 mon.rotation.y=Math.PI;mon.visible=false;S.add(mon);
 function monUpd(dt,t){for(const l of landers)if(Math.abs(l.z-car.z)<200){l.x+=2.2*dt;if(l.x>-22)l.x=-42;l.g.position.set(l.x,Math.abs(Math.sin(t*5+l.z))*.1,l.z)}
- mon.visible=st!=='menu'&&dist<ZC*L+200;if(!mon.visible)return;
+ mon.visible=!TUT.on&&st!=='menu'&&dist<ZC*L+200;if(!mon.visible)return;
  mon.position.set(-42,Math.abs(Math.sin(t*3))*.8,car.z-45+Math.sin(t*.5)*10);mon.userData.l.forEach((l,i)=>l.rotation.x=Math.sin(t*3+i*3.14)*.6);
  if(st==='play'&&Math.sin(t*3)>.985)shake=Math.max(shake,.3);
  for(const b of blds){if(!b.fall&&Math.abs(b.z-mon.position.z)<18)bldFall(b);

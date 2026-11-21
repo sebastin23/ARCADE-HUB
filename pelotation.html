@@ -2,7 +2,7 @@
 <html lang="es"><head>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%95%B9%EF%B8%8F%3C/text%3E%3C/svg%3E"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pelotation — Demolición de cajas</title>
+<title>Pelotation — Sandbox</title>
 <style>
 :root{--bg:rgba(255,255,255,.78);--fg:#14202b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:rgba(15,20,28,.78);--fg:#eef3f8}}
@@ -13,10 +13,16 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #hud b{font-size:18px}
 #cross{position:fixed;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border:2px solid #fff;border-radius:50%;mix-blend-mode:difference;pointer-events:none}
 #msg{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(10,15,25,.85);color:#fff;padding:18px 26px;border-radius:12px;font-size:20px;text-align:center;display:none;pointer-events:none}
+#bar{position:fixed;left:50%;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:6px;align-items:stretch;max-width:98vw;overflow-x:auto;padding:6px;background:var(--bg);border-radius:12px;z-index:5;-webkit-overflow-scrolling:touch}
+#bar button{flex:0 0 auto;min-width:64px;font:700 20px system-ui,sans-serif;padding:6px 8px;border:2px solid transparent;border-radius:9px;background:rgba(120,140,170,.25);color:var(--fg);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+#bar button small{font:600 10px system-ui,sans-serif;white-space:nowrap}
+#bar button.on{border-color:#ffb347;background:rgba(255,179,71,.3)}
+#bar .sep{flex:0 0 2px;background:rgba(120,140,170,.4);margin:2px 2px}
+@media (max-width:700px){#hud{font-size:11px;max-width:190px;padding:6px 8px}#hud b{font-size:14px}}
 </style></head><body>
 <canvas id="c"></canvas><div id="cross"></div><div id="msg"></div>
-<div id="hud"><b id="score">0 / 0</b> cajas derribadas<br>
-WASD mover · ratón mirar (clic para capturar)<br>Clic / Espacio: disparar · R: reiniciar<br>Flechas: mirar · N: siguiente nivel<br>Derriba el 85% con 14 bolas · Móvil: izq. mover, der. mirar/tocar disparar</div>
+<div id="hud"><b id="score">0</b><br><b style="font-size:15px">SANDBOX</b> · sin objetivos<br>WASD mover (Shift correr) · ratón mirar (clic para capturar)<br>Clic / Espacio: usar la herramienta · 1-5 herramientas<br>Flechas: mirar · Esc: soltar el ratón<br>Móvil: izq. mover, der. mirar / tocar para usar</div>
+<div id="bar"></div>
 <script src="registro-errores.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
@@ -82,74 +88,129 @@ const boxGeo=new THREE.BoxGeometry(1,1,1);
 const boxMat=new THREE.MeshStandardMaterial({map:woodTex,bumpMap:woodTex,bumpScale:.8,roughness:.85});
 const ballGeo=new THREE.SphereGeometry(.3,32,24);
 const ballMat=new THREE.MeshStandardMaterial({map:ballTex,roughness:.35,metalness:.25});
-let crates=[],balls=[];
+// ===== SANDBOX: sin objetivos, sin munición, sin niveles =====
+let crates=[],balls=[],fx=[];
+const MAX_CRATES=320,MAX_BALLS=70;
+let tool='ball',gMode=0,tMode=0;
+const GRAV=[9.82,1.6,0],GNAME=['Normal','Luna','Sin gravedad'],TSCALE=[1,.3,.1],TNAME=['1x','Lenta 0.3x','Muy lenta 0.1x'];
+const TOOLS=[['ball','🔴','Bola'],['heavy','⚫','Bola pesada'],['crate','📦','Poner caja'],['boom','💥','Explosión'],['del','🗑️','Borrar']];
+const touchMove={f:0,s:0};
 
-function addCrate(x,y,z){
+function removeCrate(o){scene.remove(o.mesh);world.removeBody(o.body);crates.splice(crates.indexOf(o),1)}
+function removeBall(o){scene.remove(o.mesh);world.removeBody(o.body);balls.splice(balls.indexOf(o),1)}
+function addCrate(x,y,z,ry){
+  if(crates.length>=MAX_CRATES)removeCrate(crates[0]);
   const mesh=new THREE.Mesh(boxGeo,boxMat);mesh.castShadow=mesh.receiveShadow=true;scene.add(mesh);
   const body=new CANNON.Body({mass:1,material:mCrate,shape:new CANNON.Box(new CANNON.Vec3(.5,.5,.5)),
     sleepSpeedLimit:.2,sleepTimeLimit:.6,linearDamping:.05,angularDamping:.1});
-  body.position.set(x,y,z);world.addBody(body);
-  crates.push({mesh,body,start:new CANNON.Vec3(x,y,z)});
+  body.position.set(x,y,z);if(ry)body.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),ry);world.addBody(body);
+  const o={mesh,body};crates.push(o);return o;
 }
-function wall(x,z,w,h){
-  for(let r=0;r<h;r++)for(let c=0;c<w;c++)addCrate(x+(c-w/2)*1.02+(r%2?.5:0),.5+r*1.001,z);
-}
-function pyramid(x,z,n){
-  for(let r=0;r<n;r++)for(let c=0;c<n-r;c++)addCrate(x+(c-(n-r)/2)*1.02,.5+r*1.001,z);
-}
-let level=1,ammo=0,state='play';const touchMove={f:0,s:0};
-const layouts=[
- ()=>{wall(0,-14,7,6);pyramid(-11,-8,6);pyramid(11,-8,6);wall(0,-24,9,4);},
- ()=>{wall(-8,-14,6,7);wall(8,-14,6,7);pyramid(0,-8,7);wall(0,-26,11,3);},
- ()=>{pyramid(-14,-10,8);pyramid(14,-10,8);wall(0,-16,9,8);wall(0,-28,13,5);pyramid(0,-6,5);}
-];
-function msg(h){const m=document.getElementById('msg');m.innerHTML=h||'';m.style.display=h?'block':'none';}
-function build(){
-  state='play';msg('');ammo=14;
-  crates.forEach(o=>{scene.remove(o.mesh);world.removeBody(o.body)});crates=[];
-  balls.forEach(o=>{scene.remove(o.mesh);world.removeBody(o.body)});balls=[];
-  layouts[(level-1)%layouts.length]();if(level>3)wall(0,-34,9,level-2);
-  document.getElementById('score').textContent='0 / '+crates.length;
-}
-build();
-
-function shoot(){
-  if(state!=='play'||ammo<=0)return;ammo--;
-  const dir=new THREE.Vector3();camera.getWorldDirection(dir);
-  const p=camera.position.clone().addScaledVector(dir,1);
-  const mesh=new THREE.Mesh(ballGeo,ballMat);mesh.castShadow=true;scene.add(mesh);
-  const body=new CANNON.Body({mass:4,material:mBall,shape:new CANNON.Sphere(.3),linearDamping:.01});
-  body.position.set(p.x,p.y,p.z);body.velocity.set(dir.x*30,dir.y*30,dir.z*30);world.addBody(body);
+function addBall(p,dir,heavy,speed){
+  if(balls.length>=MAX_BALLS)removeBall(balls[0]);
+  const r=heavy?.5:.3,mesh=new THREE.Mesh(ballGeo,heavy?heavyMat:ballMat);mesh.scale.setScalar(r/.3);mesh.castShadow=true;scene.add(mesh);
+  const body=new CANNON.Body({mass:heavy?30:4,material:mBall,shape:new CANNON.Sphere(r),linearDamping:.01});
+  body.position.set(p.x,p.y,p.z);body.velocity.set(dir.x*speed,dir.y*speed,dir.z*speed);world.addBody(body);
   balls.push({mesh,body});
-  if(balls.length>25){const o=balls.shift();scene.remove(o.mesh);world.removeBody(o.body);}
+}
+const heavyMat=new THREE.MeshStandardMaterial({color:0x222831,roughness:.3,metalness:.7});
+function wall(x,z,w,h){for(let r=0;r<h;r++)for(let c=0;c<w;c++)addCrate(x+(c-w/2)*1.02+(r%2?.5:0),.5+r*1.001,z)}
+function pyramid(x,z,n){for(let r=0;r<n;r++)for(let c=0;c<n-r;c++)addCrate(x+(c-(n-r)/2)*1.02,.5+r*1.001,z)}
+function tower(x,z,h){for(let r=0;r<h;r++)addCrate(x,.5+r*1.001,z)}
+function dominoes(x,z,n){for(let i=0;i<n;i++)addCrate(x+(i-n/2)*1.35,.5,z)}
+// sitio delante del jugador donde aparecen las estructuras
+function front(d){return{x:pos.x-Math.sin(yaw)*d,z:pos.z-Math.cos(yaw)*d}}
+const STRUCT={
+  wall:()=>{const p=front(10);wall(p.x,p.z,8,5)},
+  pyr:()=>{const p=front(11);pyramid(p.x,p.z,7)},
+  tower:()=>{const p=front(9);tower(p.x,p.z,10)},
+  domino:()=>{const p=front(10);dominoes(p.x,p.z,12)},
+  mix:()=>{const p=front(14);wall(p.x-9,p.z,5,4);pyramid(p.x+9,p.z,5);tower(p.x,p.z,7)}
+};
+function clearAll(){[...crates].forEach(removeCrate);[...balls].forEach(removeBall)}
+
+// punto al que apunta la mira
+const ray=new THREE.Raycaster();
+function aim(){
+  ray.setFromCamera({x:0,y:0},camera);ray.far=80;
+  const hits=ray.intersectObjects([ground,...crates.map(o=>o.mesh),...balls.map(o=>o.mesh)],false);
+  if(!hits.length)return null;const h=hits[0];
+  const n=h.face?h.face.normal.clone().transformDirection(h.object.matrixWorld):new THREE.Vector3(0,1,0);
+  return{p:h.point,n,obj:h.object};
+}
+function boom(p){
+  const R=8,F=70;
+  for(const o of [...crates,...balls]){
+    const q=o.body.position,dx=q.x-p.x,dy=q.y-p.y,dz=q.z-p.z,d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(d<R){const k=F*(1-d/R)/Math.max(d,.5)*o.body.mass*.5;o.body.wakeUp();o.body.applyImpulse(new CANNON.Vec3(dx*k,(dy+1.5)*k,dz*k),o.body.position)}
+  }
+  const m=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:.7}));
+  m.position.copy(p);scene.add(m);fx.push({m,t:0});
+}
+function act(){
+  if(tool==='ball'||tool==='heavy'){
+    const dir=new THREE.Vector3();camera.getWorldDirection(dir);
+    addBall(camera.position.clone().addScaledVector(dir,1),dir,tool==='heavy',tool==='heavy'?26:30);return;
+  }
+  const a=aim();if(!a)return;
+  if(tool==='crate'){const q=a.p.clone().addScaledVector(a.n,.51);addCrate(q.x,Math.max(.5,q.y),q.z,yaw)}
+  else if(tool==='boom')boom(a.p);
+  else if(tool==='del'){
+    const c=crates.find(o=>o.mesh===a.obj);if(c)return removeCrate(c);
+    const b=balls.find(o=>o.mesh===a.obj);if(b)removeBall(b);
+  }
 }
 
-// Controles
+// ---- interfaz ----
+const bar=document.getElementById('bar');
+function buildBar(){
+  const b=(id,t,on)=>`<button id="${id}"${on?' class="on"':''}>${t}</button>`;
+  bar.innerHTML=TOOLS.map((t,i)=>b('t_'+t[0],`${t[1]}<small>${i+1} · ${t[2]}</small>`,tool===t[0])).join('')+'<span class="sep"></span>'+
+   b('s_wall','🧱<small>M · Muro</small>')+b('s_pyr','🔺<small>P · Pirámide</small>')+b('s_tower','🗼<small>U · Torre</small>')+b('s_domino','🁢<small>O · Dominó</small>')+b('s_mix','🏗️<small>I · Mezcla</small>')+'<span class="sep"></span>'+
+   b('gmode',`🌙<small>G · Gravedad: ${GNAME[gMode]}</small>`)+b('tmode',`⏱️<small>T · Tiempo: ${TNAME[tMode]}</small>`)+b('clr','🧹<small>R · Limpiar</small>');
+  TOOLS.forEach(t=>document.getElementById('t_'+t[0]).onclick=()=>setTool(t[0]));
+  for(const k in STRUCT)document.getElementById('s_'+k).onclick=STRUCT[k];
+  document.getElementById('gmode').onclick=cycleG;document.getElementById('tmode').onclick=cycleT;document.getElementById('clr').onclick=clearAll;
+}
+function setTool(t){tool=t;buildBar();toast(TOOLS.find(x=>x[0]===t)[2])}
+function cycleG(){gMode=(gMode+1)%GRAV.length;world.gravity.set(0,-GRAV[gMode],0);for(const o of [...crates,...balls])o.body.wakeUp();buildBar();toast('Gravedad: '+GNAME[gMode])}
+function cycleT(){tMode=(tMode+1)%TSCALE.length;buildBar();toast('Tiempo: '+TNAME[tMode])}
+let toastT=0;function toast(h){const m=document.getElementById('msg');m.innerHTML=h;m.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>m.style.display='none',1100)}
+buildBar();
+
+// ---- controles ----
 let yaw=0,pitch=-.05;const pos=new THREE.Vector3(0,1.7,12);const keys={};
-addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'){shoot();e.preventDefault();}if(e.code==='KeyR')build();if(e.code==='KeyN'&&state==='win'){level++;build();}});
+const KEYTOOL={Digit1:'ball',Digit2:'heavy',Digit3:'crate',Digit4:'boom',Digit5:'del'};
+const KEYSTRUCT={KeyM:'wall',KeyP:'pyr',KeyU:'tower',KeyO:'domino',KeyI:'mix'};
+addEventListener('keydown',e=>{keys[e.code]=true;
+  if(e.code==='Space'){act();e.preventDefault()}
+  else if(KEYTOOL[e.code])setTool(KEYTOOL[e.code]);
+  else if(KEYSTRUCT[e.code])STRUCT[KEYSTRUCT[e.code]]();
+  else if(e.code==='KeyG')cycleG();else if(e.code==='KeyT')cycleT();else if(e.code==='KeyR')clearAll()});
 addEventListener('keyup',e=>keys[e.code]=false);
-addEventListener('blur',()=>{for(const k in keys)keys[k]=false;touchMove.f=touchMove.s=0;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;touchMove.f=touchMove.s=0});
 addEventListener('mousemove',e=>{
-  if(document.pointerLockElement===canvas||e.buttons===2){yaw-=e.movementX*.0025;pitch=Math.max(-1.4,Math.min(1.4,pitch-e.movementY*.0025));}
+  if(document.pointerLockElement===canvas||e.buttons===2){yaw-=e.movementX*.0025;pitch=Math.max(-1.4,Math.min(1.4,pitch-e.movementY*.0025))}
 });
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('mousedown',e=>{
   if(e.button!==0)return;
-  if(document.pointerLockElement!==canvas){try{canvas.requestPointerLock();}catch(_){}}
-  shoot();
+  if(document.pointerLockElement!==canvas){try{canvas.requestPointerLock()}catch(_){}}
+  act();
 });
 const clampP=v=>Math.max(-1.4,Math.min(1.4,v));let tl=null,tr=null;
-addEventListener('touchstart',e=>{for(const t of e.changedTouches){const o={id:t.identifier,x:t.clientX,y:t.clientY,lx:t.clientX,ly:t.clientY,moved:0};if(t.clientX<innerWidth/2)tl=o;else tr=o;}if(state==='win'){level++;build();}else if(state==='lose')build();},{passive:true});
-addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){
-  if(tl&&t.identifier===tl.id){touchMove.f=Math.max(-1,Math.min(1,(tl.y-t.clientY)/50));touchMove.s=Math.max(-1,Math.min(1,(t.clientX-tl.x)/50));}
-  else if(tr&&t.identifier===tr.id){yaw-=(t.clientX-tr.lx)*.005;pitch=clampP(pitch-(t.clientY-tr.ly)*.005);tr.moved+=Math.abs(t.clientX-tr.lx)+Math.abs(t.clientY-tr.ly);tr.lx=t.clientX;tr.ly=t.clientY;}}},{passive:false});
+const onBar=e=>e.target&&e.target.closest&&e.target.closest('#bar');
+addEventListener('touchstart',e=>{if(onBar(e))return;for(const t of e.changedTouches){const o={id:t.identifier,x:t.clientX,y:t.clientY,lx:t.clientX,ly:t.clientY,moved:0};if(t.clientX<innerWidth/2)tl=o;else tr=o}},{passive:false});
+addEventListener('touchmove',e=>{if(onBar(e))return;e.preventDefault();for(const t of e.changedTouches){
+  if(tl&&t.identifier===tl.id){touchMove.f=Math.max(-1,Math.min(1,(tl.y-t.clientY)/50));touchMove.s=Math.max(-1,Math.min(1,(t.clientX-tl.x)/50))}
+  else if(tr&&t.identifier===tr.id){yaw-=(t.clientX-tr.lx)*.005;pitch=clampP(pitch-(t.clientY-tr.ly)*.005);tr.moved+=Math.abs(t.clientX-tr.lx)+Math.abs(t.clientY-tr.ly);tr.lx=t.clientX;tr.ly=t.clientY}}},{passive:false});
 addEventListener('touchend',e=>{for(const t of e.changedTouches){
-  if(tl&&t.identifier===tl.id){tl=null;touchMove.f=touchMove.s=0;}
-  else if(tr&&t.identifier===tr.id){if(tr.moved<12)shoot();tr=null;}}});
-function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+  if(tl&&t.identifier===tl.id){tl=null;touchMove.f=touchMove.s=0}
+  else if(tr&&t.identifier===tr.id){if(tr.moved<12)act();tr=null}}});
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
 
-// Bucle
+// ---- bucle ----
 const clock=new THREE.Clock();
 function loop(){
   requestAnimationFrame(loop);
@@ -160,22 +221,20 @@ function loop(){
   pos.x+=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*v;pos.z+=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*v;
   pos.x=Math.max(-45,Math.min(45,pos.x));pos.z=Math.max(-45,Math.min(45,pos.z));
   for(const o of crates){const q=o.body.position;if(q.y>2.2)continue;const dx=pos.x-q.x,dz=pos.z-q.z,r=.85;
-    if(Math.abs(dx)<r&&Math.abs(dz)<r){if(Math.abs(dx)>Math.abs(dz))pos.x=q.x+(dx<0?-r:r);else pos.z=q.z+(dz<0?-r:r);}}
+    if(Math.abs(dx)<r&&Math.abs(dz)<r){if(Math.abs(dx)>Math.abs(dz))pos.x=q.x+(dx<0?-r:r);else pos.z=q.z+(dz<0?-r:r)}}
   camera.position.copy(pos);camera.rotation.set(pitch,yaw,0);
 
-  world.step(1/60,dt,4);
-  let down=0;
+  world.step(1/60,dt*TSCALE[tMode],4);
   for(const o of crates){
+    if(o.body.position.y<-20){removeCrate(o);continue}   // cayó fuera del mundo
     o.mesh.position.copy(o.body.position);o.mesh.quaternion.copy(o.body.quaternion);
-    if(o.body.position.distanceTo(o.start)>1.3)down++;
   }
-  for(const o of balls){o.mesh.position.copy(o.body.position);o.mesh.quaternion.copy(o.body.quaternion);}
-  document.getElementById('score').textContent='Nv '+level+' · '+down+' / '+crates.length+' · 🔴 '+ammo;
-  if(state==='play'){
-    const calm=crates.every(o=>o.body.velocity.lengthSquared()<.05)&&balls.every(b=>b.body.velocity.lengthSquared()<.25);
-    if(down>=Math.ceil(crates.length*.85)){state='win';msg('¡Nivel '+level+' superado!<br><small>Pulsa N o toca la pantalla para el siguiente</small>');}
-    else if(ammo<=0&&calm){state='lose';msg('Sin bolas<br><small>Pulsa R o toca la pantalla para reintentar</small>');}
+  for(const o of [...balls]){
+    if(o.body.position.y<-20||o.body.position.y>200){removeBall(o);continue}
+    o.mesh.position.copy(o.body.position);o.mesh.quaternion.copy(o.body.quaternion);
   }
+  for(let i=fx.length-1;i>=0;i--){const e=fx[i];e.t+=dt;const k=e.t/.45;e.m.scale.setScalar(1+k*7);e.m.material.opacity=Math.max(0,.7*(1-k));if(k>=1){scene.remove(e.m);e.m.geometry.dispose();e.m.material.dispose();fx.splice(i,1)}}
+  document.getElementById('score').textContent='📦 '+crates.length+' · 🔴 '+balls.length;
   renderer.render(scene,camera);
 }
 loop();

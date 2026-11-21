@@ -4,16 +4,20 @@
    (script clásico: comparte variables con los demás neon-buggy-*.js; orden de carga en neon-buggy.html)
    ====================================================================== */
 /* ---------- fase 4: ajustes, tutorial, logros, guardado en la nube y fantasma ---------- */
-const SET=Object.assign({vol:1,q:2,steer:1},ls.get('nb_set',{}));
+const SET=Object.assign({vol:1,q:2,steer:1,fps:0},ls.get('nb_set',{}));
 function setApply(){try{R.setPixelRatio(Math.min(window.devicePixelRatio||1,SET.q===0?1:SET.q===1?1.5:2));R.setSize(innerWidth,innerHeight)}catch(e){}
  try{const sh=SET.q!==0;if(R.shadowMap.enabled!==sh){R.shadowMap.enabled=sh;sun.castShadow=sh;S.traverse(o=>{const m=o.material;if(m)(Array.isArray(m)?m:[m]).forEach(q=>{q.needsUpdate=true})})}}catch(e){}
  try{if(mg)mg.gain.value=SET.vol}catch(e){}}
+/* contador de FPS (usa la medición de AX.fps) */
+const fpsEl=mk('div');fpsEl.id='fpsn';document.body.appendChild(fpsEl);
+function fpsShow(){fpsEl.style.display=SET.fps?'block':'none'}
+setInterval(()=>{if(SET.fps)fpsEl.textContent=Math.round(AX.fps)+' FPS'},500);fpsShow();
 function setUI(){const QN=['BAJA','MEDIA','ALTA'];
- panel(`<h1>AJUSTES</h1><div class='srow'><span>Volumen</span><span><button class='go alt tg' id='vm'>−</button> <b id='vv'></b> <button class='go alt tg' id='vp'>+</button></span></div><div class='srow'><span>Calidad gráfica</span><button class='go alt tg' id='sq'></button></div><div class='srow'><span>Sensibilidad de giro</span><span><button class='go alt tg' id='sm'>−</button> <b id='sv'></b> <button class='go alt tg' id='sp'>+</button></span></div><p style='font-size:13px;opacity:.85'>Calidad BAJA: sin sombras y menos resolución, para móviles lentos.</p><div class='row'><button class='go alt' id='stut'>JUGAR EL TUTORIAL</button></div><div class='row'><button class='go' id='bk'>VOLVER</button></div>`);
- const sv=()=>{ls.set('nb_set',SET);setApply()},up=()=>{$('vv').textContent=Math.round(SET.vol*100)+'%';$('sv').textContent=Math.round(SET.steer*100)+'%';$('sq').textContent=QN[SET.q]},cl=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v*10)/10));
+ panel(`<h1>AJUSTES</h1><div class='srow'><span>Volumen</span><span><button class='go alt tg' id='vm'>−</button> <b id='vv'></b> <button class='go alt tg' id='vp'>+</button></span></div><div class='srow'><span>Calidad gráfica</span><button class='go alt tg' id='sq'></button></div><div class='srow'><span>Mostrar FPS</span><button class='go alt tg' id='sfps'></button></div><div class='srow'><span>Sensibilidad de giro</span><span><button class='go alt tg' id='sm'>−</button> <b id='sv'></b> <button class='go alt tg' id='sp'>+</button></span></div><p style='font-size:13px;opacity:.85'>Calidad BAJA: sin sombras y menos resolución, para móviles lentos.</p><div class='row'><button class='go alt' id='stut'>JUGAR EL TUTORIAL</button></div><div class='row'><button class='go' id='bk'>VOLVER</button></div>`);
+ const sv=()=>{ls.set('nb_set',SET);setApply()},up=()=>{$('vv').textContent=Math.round(SET.vol*100)+'%';$('sv').textContent=Math.round(SET.steer*100)+'%';$('sq').textContent=QN[SET.q];$('sfps').textContent=SET.fps?'SÍ':'NO'},cl=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v*10)/10));
  $('vm').onclick=()=>{SET.vol=cl(SET.vol-.1,0,1);sv();up();snd(600,.1,'triangle',.08,0)};$('vp').onclick=()=>{SET.vol=cl(SET.vol+.1,0,1);sv();up();snd(600,.1,'triangle',.08,0)};
  $('sm').onclick=()=>{SET.steer=cl(SET.steer-.1,.5,1.6);sv();up()};$('sp').onclick=()=>{SET.steer=cl(SET.steer+.1,.5,1.6);sv();up()};
- $('sq').onclick=()=>{SET.q=(SET.q+1)%3;sv();up()};$('stut').onclick=()=>tutStart();$('bk').onclick=menu;up()}
+ $('sq').onclick=()=>{SET.q=(SET.q+1)%3;sv();up()};$('sfps').onclick=()=>{SET.fps=SET.fps?0:1;sv();up();fpsShow()};$('stut').onclick=()=>tutStart();$('bk').onclick=menu;up()}
 /* ---------- tutorial jugable ---------- */
 const TOUCH=typeof matchMedia==='function'&&matchMedia('(pointer:coarse)').matches;
 const TUT={on:0,k:-1,ok:[0,0,0,0,0,0],nit:0,brk:0,flip:0,cr:0};

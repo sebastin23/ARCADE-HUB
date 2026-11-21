@@ -77,9 +77,9 @@ window.GAMES = [
     id: 'pelotation',
     name: 'Pelotation',
     emoji: '🧱',
-    tags: ['3D', 'Disparos', 'Físicas'],
-    desc: 'Dispara en primera persona y derriba todas las cajas con físicas realistas.',
-    controls: 'WASD mover · ratón mirar · clic/Espacio disparar · R reiniciar',
+    tags: ['3D', 'Sandbox', 'Físicas'],
+    desc: 'Sandbox de físicas en primera persona: dispara bolas, construye estructuras, haz explosiones y cambia la gravedad. Sin objetivos.',
+    controls: 'WASD mover · ratón mirar · clic/Espacio usar · 1-5 herramientas · G gravedad · R limpiar',
     colors: ['#3a8dde', '#87b5e0']
   },
   {
