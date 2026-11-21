@@ -192,6 +192,7 @@ canvas.glx{animation:glx 1.7s steps(1,end) infinite}
 .od{width:10px;height:10px;border-radius:50%;background:#555;display:inline-block;margin-right:6px}.lr.on .od{background:#7dff3a;box-shadow:0 0 6px #7dff3a}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;font-family:var(--ln);font-size:18px}.srow b{display:inline-block;min-width:54px;text-align:center}.lt .rb{display:flex;align-items:center;justify-content:center;padding:0}.lt .rb img{width:26px;height:26px;display:block;pointer-events:none}
 #tutb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 64px);left:50%;transform:translateX(-50%);z-index:9;display:none;max-width:min(92vw,520px);text-align:center;font-family:var(--ln);color:#fff;background:rgba(10,8,40,.72);border:4px solid var(--navy);border-radius:14px;padding:10px 16px;pointer-events:none;font-size:18px;text-shadow:0 2px 0 #000}#tutb b{color:#ffe14a;display:block;font-size:20px}#tutb small{display:block;opacity:.9;margin-top:4px}#tutb small.ok{color:#7dff3a;opacity:1}
+#agate{position:fixed;inset:0;z-index:99999;background:rgba(5,4,25,.78);display:flex;align-items:center;justify-content:center;padding:16px}#agate .agb{background:#1b1670;border:4px solid var(--navy);border-radius:16px;padding:18px;max-width:340px;width:100%;color:#fff;font-family:var(--ln);text-align:center}#agate .agb b{display:block;font-size:22px;margin-bottom:10px}#agate #agm{color:#ffe14a;min-height:22px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -234,6 +235,7 @@ canvas.glx{animation:glx 1.7s steps(1,end) infinite}
 <div id="cine"><div class="b t"></div><div class="b u"></div><div id="alr"></div><div id="cap"></div></div><div id="rain"></div><div id="fade"></div>
 <div id="ld"><h1>NEÓN BUGGY<br>INFINITO</h1><div class="lb"><i id="lbi"></i></div><p id="lt">Cargando…</p></div>
 
+<script src="seguridad.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -960,8 +962,20 @@ function xaStop(){if(!XA.act)return;XA.zom=false;XA.armyRows=0;XA.empty=false;XA
 function xaResetAll(){xaStop();for(const k in XD)XP[k]=XD[k];XA.tsE=1;XA.camMode='normal';XA.gOn=false;XA.lite=false;car3.scale.setScalar(1);car3.visible=true;xaFilter('');xaRoad(0);
  FOG.near=80;FOG.far=250;if(!XA.dark)S.background=skT;axUI(true)}
 
+/* puerta del admin: pide contraseña (se compara por hash, ver seguridad.js) */
+function admGate(ok){
+  const pn=$('adm');if(pn.classList.contains('on')){ok();return}
+  if($('agate'))return;
+  const d=mk('div');d.id='agate';
+  d.innerHTML="<div class='agb'><b>🔒 ADMIN</b><input class='inp' id='agin' type='password' autocomplete='off' placeholder='Contraseña'><p id='agm'></p><div class='cs2'><button class='go alt' id='agx'>CANCELAR</button><button class='go' id='ago'>ENTRAR</button></div></div>";
+  document.body.appendChild(d);const inp=$('agin'),m=$('agm');inp.focus();
+  const close=()=>d.remove();
+  const go=()=>{const w=SEC.bloqueado();if(w){m.textContent='Demasiados intentos. Espera '+w+' s.';return}
+    if(SEC.admin(inp.value)){close();ok()}else{m.textContent=SEC.bloqueado()?'Demasiados intentos. Espera 1 min.':'Contraseña incorrecta';inp.value='';inp.focus()}};
+  $('ago').onclick=go;$('agx').onclick=close;inp.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')go();else if(e.key==='Escape')close()};
+  inp.onkeyup=e=>e.stopPropagation()}
 /* panel admin: código Konami */
-{const K=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','KeyB','KeyA'];let ki=0;const pn=$('adm'),g=id=>$(id),sl=g('aspd'),sn=g('aspdn'),ck=g('ainv');
+{let kb=[];const pn=$('adm'),g=id=>$(id),sl=g('aspd'),sn=g('aspdn'),ck=g('ainv');
   const sync=src=>{
     if(src==='n'){XA.reqTxt=String(sn.value).trim();const v=Math.max(.2,Math.min(1e300,+sn.value||1));admin.spd=v;sl.value=Math.min(100,v)}else{admin.spd=+sl.value;sn.value=admin.spd;XA.reqTxt=String(admin.spd)}
     admin.ghost=g('aghost').checked;admin.fly=g('afly').checked;admin.tur=g('atur').checked;admin.free=g('afree').checked;
@@ -974,7 +988,7 @@ function xaResetAll(){xaStop();for(const k in XD)XP[k]=XD[k];XA.tsE=1;XA.camMode
   g('aboom').onclick=bigBoom;g('dwat').onclick=()=>{D.waterOn=!D.waterOn;dsBtn()};g('dtsu').onclick=tsunami;g('dtor').onclick=()=>{if(D.tor)dsKill('tor');else tornado();dsBtn()};
   g('dbli').onclick=()=>{D.bliz=!D.bliz;if(!D.bliz){FOG.near=80;FOG.far=250;snow.visible=false}dsBtn()};g('dstop').onclick=dsStop;
   g('arst').onclick=()=>{sl.value=1;sn.value=1;ck.checked=false;['aghost','afly','atur','afree'].forEach(id=>g(id).checked=false);g('aform').value='';dsStop();sync()};g('acls').onclick=()=>pn.classList.remove('on');
-  addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'&&(e.target.type==='range'||e.target.type==='number')&&e.code.startsWith('Arrow'))return;ki=e.code===K[ki]?ki+1:(e.code===K[0]?1:0);if(ki===K.length){ki=0;pn.classList.toggle('on');snd(660,.25,'square',.06,400)}})}
+  addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'&&(e.target.type==='range'||e.target.type==='number')&&e.code.startsWith('Arrow'))return;kb.push(e.code);if(kb.length>10)kb.shift();if(kb.length===10&&SEC.konami(kb)){kb=[];admGate(()=>{pn.classList.toggle('on');snd(660,.25,'square',.06,400)})}})}
 /* ======================================================================
    ADMIN GOD MODE · panel con pestañas, presets, debug, cinemáticas
    ====================================================================== */
@@ -1254,7 +1268,7 @@ addEventListener('error',e=>xaErr(e.message||e));addEventListener('unhandledreje
 /* elementos auxiliares */
 {const a=mk('div',0,'🧪 EXPERIMENTAL'),b=mk('div'),c=mk('div');a.id='axbadge';b.id='axdbg';c.id='axflash';document.body.append(a,b,c)}
 /* apertura en móvil: 5 toques rápidos en la esquina superior izquierda */
-{const h=mk('div');h.id='axhot';document.body.appendChild(h);let n=0,t0=0;h.addEventListener('pointerdown',e=>{const now=performance.now();n=now-t0<700?n+1:1;t0=now;if(n>=5){n=0;$('adm').classList.toggle('on');snd(660,.25,'square',.06,400);axUI(true)}})}
+{const h=mk('div');h.id='axhot';document.body.appendChild(h);let n=0,t0=0;h.addEventListener('pointerdown',e=>{const now=performance.now();n=now-t0<700?n+1:1;t0=now;if(n>=5){n=0;admGate(()=>{$('adm').classList.toggle('on');snd(660,.25,'square',.06,400);axUI(true)})}})}
 axUI(true);
 
 pw=buildCar(car3,CP);/* ---------- online: usuario, reto diario, tablas y amigos (Supabase) ---------- */

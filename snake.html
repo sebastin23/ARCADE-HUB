@@ -600,6 +600,7 @@
 
 <div id="glitchOverlay"></div>
 
+<script src="seguridad.js"></script>
 <script>
 (() => {
   const canvas = document.getElementById('gameCanvas');
@@ -1455,30 +1456,30 @@
   function processCheatCode(code) {
     const plainCode = code.trim().toLowerCase();
     
-    // Encoded cheat codes using btoa() in browser console.
-    const encodedCodes = {
-      "aW5maW5pdG8gb3Jv": "Oro infinito activado: ¡todas las skins son gratis!",
-      "aW52ZW5jaWJsZQ==": "Modo invencible activado: ¡atraviesa paredes y a ti mismo!",
-      "cGVyZG9u": "Sanciones eliminadas. ¡Puedes volver a jugar sin restricciones!",
-      "Y2FiZXph": "Modo doble cabeza activado (próximamente).",
-      "eDI=": "Crecimiento x2 activado: ¡creces el doble con cada manzana!",
-      "eDEw": "Crecimiento x10 activado: ¡creces diez veces más rápido!",
-      "Z2FuYXI=": "¡Come una manzana para crecer hasta casi ganar!"
+    // Los códigos no están en el código: solo su huella (ver seguridad.js).
+    const msgs = {
+      infinito: "Oro infinito activado: ¡todas las skins son gratis!",
+      invencible: "Modo invencible activado: ¡atraviesa paredes y a ti mismo!",
+      perdon: "Sanciones eliminadas. ¡Puedes volver a jugar sin restricciones!",
+      cabeza: "Modo doble cabeza activado (próximamente).",
+      x2: "Crecimiento x2 activado: ¡creces el doble con cada manzana!",
+      x10: "Crecimiento x10 activado: ¡creces diez veces más rápido!",
+      ganar: "¡Come una manzana para crecer hasta casi ganar!"
     };
 
-    const encodedPlainCode = btoa(plainCode);
+    const codeId = SEC.snake(plainCode);
 
-    if (encodedCodes[encodedPlainCode]) {
-        switch(plainCode) {
-            case atob("aW5maW5pdG8gb3Jv"): // infinito oro
+    if (codeId) {
+        switch(codeId) {
+            case 'infinito': // infinito oro
                 gold = Number.MAX_SAFE_INTEGER; 
                 localStorage.setItem(STORAGE_INFINITYGOLD, 'true'); 
                 break;
-            case atob("aW52ZW5jaWJsZQ=="): // invencible
+            case 'invencible': // invencible
                 invincible = true; 
                 localStorage.setItem(STORAGE_INVINCIBLE, 'true'); 
                 break;
-            case atob("cGVyZG9u"): // perdon
+            case 'perdon': // perdon
                 if (isAwaitingPerdon) {
                     clearTimeout(perdonTimer);
                     clearInterval(dizzyInterval);
@@ -1500,20 +1501,20 @@
                     alert("Este código no tiene efecto en este momento.");
                 }
                 return; // Return to avoid double alert
-            case atob("eDI="): // x2
+            case 'x2': // x2
                 doubleGrowActive = true; 
                 localStorage.setItem(STORAGE_DOUBLE_GROW, 'true'); 
                 break;
-            case atob("eDEw"): // x10
+            case 'x10': // x10
                 x10GrowActive = true; 
                 localStorage.setItem(STORAGE_X10_GROW, 'true'); 
                 break;
-            case atob("Z2FuYXI="): // ganar
+            case 'ganar': // ganar
                 winCheatActive = true; 
                 localStorage.setItem(STORAGE_WIN_CHEAT, 'true'); 
                 break;
         }
-        alert(`Código '${plainCode}' activado: ${encodedCodes[encodedPlainCode]}`);
+        alert(`Código '${plainCode}' activado: ${msgs[codeId]}`);
     } else {
       if (confirm("El código introducido no es válido. Intentar usar códigos desconocidos se considera suplantación de identidad y puede resultar en sanciones. ¿Quieres continuar?")) {
         let punishCount = (parseInt(localStorage.getItem(PUNISH_COUNT_KEY)) || 0) + 1;

@@ -2532,7 +2532,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // --- ADMIN, REBIRTH & SAVE/LOAD FUNCTIONS ---
 function showAdminPrompt() {
     const pass = prompt("Introduce la contraseña de administrador:");
-    if (pass === "admin8009") { toggleAdminMenu(true); } else if (pass) { alert("Contraseña incorrecta."); }
+    if (pass && SEC.admin(pass)) { toggleAdminMenu(true); } else if (pass) { alert(SEC.bloqueado() ? "Demasiados intentos. Espera " + SEC.bloqueado() + " s." : "Contraseña incorrecta."); }
 }
 function toggleAdminMenu(show) {
     adminMenu.style.display = show ? 'flex' : 'none';
@@ -2802,7 +2802,7 @@ function showAchievementToast(achievement) {
 
 function checkAdminCharacterSelect() {
     const code = prompt("Introduce el código de personaje:");
-    if (code === "admin8009") { alert("¡Código correcto! Personaje de Administrador desbloqueado. ¡Diviértete!"); selectCharacter(characters.ADMIN.stats); }
+    if (code && SEC.admin(code)) { alert("¡Código correcto! Personaje de Administrador desbloqueado. ¡Diviértete!"); selectCharacter(characters.ADMIN.stats); }
     else if (code) { alert("Código incorrecto."); }
 }
 

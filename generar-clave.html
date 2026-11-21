@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Generador de claves · ARCADE-HUB</title>
+<link rel="icon" type="image/png" href="hub-icono.png">
+<style>body{font-family:system-ui,sans-serif;background:#12102e;color:#fff;max-width:640px;margin:0 auto;padding:20px}
+input,button,textarea{font:inherit;padding:10px;border-radius:8px;border:0;width:100%;box-sizing:border-box;margin:6px 0}
+button{background:#ffe14a;cursor:pointer;font-weight:700}textarea{background:#0a0820;color:#9f9;height:90px}small{color:#aab}</style></head><body>
+<h1>Generador de claves</h1>
+<p><small>Herramienta privada. Todo se calcula en tu navegador; no se envía nada. No enlaces esta página desde el hub.</small></p>
+<label>Clave nueva (mejor larga: frase de 4+ palabras)</label>
+<input id="t" type="text" autocomplete="off">
+<label>Vueltas (más = más lento de adivinar)</label>
+<input id="n" type="number" value="6000" min="1" max="200000">
+<button id="g">Generar</button>
+<label>Pega esto en seguridad.js, dentro de <code>T</code> (reemplaza el bloque de <code>admin</code>):</label>
+<textarea id="o" readonly></textarea>
+<script src="seguridad.js"></script>
+<script>
+document.getElementById('g').onclick=function(){
+  var t=document.getElementById('t').value,n=Math.max(1,Math.min(200000,+document.getElementById('n').value||6000));
+  if(!t){document.getElementById('o').value='Escribe una clave.';return}
+  var s=SEC.nuevaSal();
+  document.getElementById('o').value='admin: '+JSON.stringify({s:s,n:n,h:SEC.hash(t,s,n)})+',';
+};
+</script></body></html>
