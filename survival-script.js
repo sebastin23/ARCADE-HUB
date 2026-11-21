@@ -100,22 +100,22 @@ function loadAsset(name, src) {
 
 function preloadAssets() {
     // Imagen del Arch Caster Boss (ya la tienes)
-    loadAsset('archCasterBossSprite', 'survival-jefe_final.png');
+    loadAsset('archCasterBossSprite', 'survival-jefe_final.webp');
 
     // Pon esto donde cargas las imágenes
-    loadAsset('broodQueenSprite', 'survival-La_reina_de_la_Prole.png');
+    loadAsset('broodQueenSprite', 'survival-La_reina_de_la_Prole.webp');
 
     // Imagen del Proyectil del Jefe (ya la tienes)
     loadAsset('bossProjectileSprite', 'survival-bola_de_fuego.png');
 
     // --- NUEVA LÍNEA: Imagen del Juggernaut Boss ---
-    loadAsset('juggernautBossSprite', 'survival-rey_juggernaut.png');
+    loadAsset('juggernautBossSprite', 'survival-rey_juggernaut.webp');
     // ---------------------------------------------------
 
-    // Para usar tu propia imagen (ej. 'survival-rey_juggernaut.png'):
+    // Para usar tu propia imagen (ej. 'survival-rey_juggernaut.webp'):
     // 1. Borra la línea de 'data:image...' de arriba.
     // 2. Descomenta la línea de abajo y pon el nombre de tu archivo:
-    // loadAsset('juggernautBossSprite', 'survival-rey_juggernaut.png');
+    // loadAsset('juggernautBossSprite', 'survival-rey_juggernaut.webp');
 }
 
 

@@ -89,7 +89,7 @@ window.GAMES = [
     tags: ['2D', 'Arcade'],
     desc: 'El clásico de la serpiente con tienda, oro y mejoras.',
     controls: 'Flechas / WASD o deslizar el dedo',
-    img: 'snake-icono.png',
+    img: 'snake-icono.webp',
     colors: ['#4CAF50', '#1b5e20']
   },
   {
@@ -99,7 +99,7 @@ window.GAMES = [
     tags: ['2D', 'Disparos', 'Supervivencia'],
     desc: 'Sobrevive a oleadas de enemigos y jefes, sube de nivel y mejora tu equipo en la tienda.',
     controls: 'Mando o teclado · Q bomba · E ataque cruz · C cofre · L cofre legendario',
-    img: 'survival-logo.png',
+    img: 'survival-logo.webp',
     colors: ['#7b2cff', '#00e5ff']
   }
 ];
