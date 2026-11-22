@@ -9,7 +9,13 @@ button{font:inherit;padding:10px 16px;border:0;border-radius:8px;background:#ffe
 <h1>🐞 Errores del hub</h1>
 <p><small>Errores de JavaScript guardados en este navegador. Los de extensiones no se apuntan. <a href="index.html">Volver al hub</a></small></p>
 <button id="c">Copiar todo</button><button id="b">Borrar</button>
+<p><label><input type="checkbox" id="env"> Avisar al administrador de los errores nuevos de este navegador</label><br><small>Solo se envía la página, el texto del error, el archivo y la línea. Nada personal.</small></p>
 <div id="l"></div>
+<details style="margin-top:24px"><summary><b>Errores de todos los jugadores (solo administrador)</b></summary>
+<p><small>Escribe la clave de administrador de Ekovozia. Ojo: 4 claves incorrectas seguidas bloquean tu conexión.</small></p>
+<input id="ak" type="password" autocomplete="off" placeholder="Clave de administrador" style="font:inherit;padding:10px;border-radius:8px;border:0;width:100%;box-sizing:border-box;margin:6px 0">
+<button id="ag">Cargar</button><button id="ab">Borrar todos</button>
+<div id="al"></div></details>
 <script>
 (function(){
   var K='hub_errores',l=document.getElementById('l'),a=[];
@@ -17,6 +23,16 @@ button{font:inherit;padding:10px 16px;border:0;border-radius:8px;background:#ffe
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   l.innerHTML=a.length?a.slice().reverse().map(function(x){
     return '<div class="e"><b>'+esc(x.m)+'</b>'+(x.n>1?' <em>(×'+x.n+')</em>':'')+'<small>'+esc(x.p)+' · '+esc(x.f||'script en línea')+(x.l?':'+x.l+':'+x.c:'')+' · '+new Date(x.t).toLocaleString()+'</small></div>'}).join(''):'<p>✅ Sin errores registrados.</p>';
+  var API='https://eco.x-mayor.workers.dev',env=document.getElementById('env');
+  try{env.checked=localStorage.getItem('hub_errores_envio')!=='off'}catch(e){}
+  env.onchange=function(){try{localStorage.setItem('hub_errores_envio',env.checked?'on':'off')}catch(e){}};
+  function adm(body,cb){var k=document.getElementById('ak').value;if(!k){alert('Escribe la clave');return}
+    fetch(API+'/admin/errors',{method:'POST',headers:{'content-type':'text/plain',authorization:'Bearer '+k},body:JSON.stringify(body)})
+    .then(function(r){return r.json().then(function(j){return{s:r.status,j:j}})}).then(function(o){if(o.s!==200){alert(o.j.error||('Error '+o.s));return}cb(o.j)}).catch(function(){alert('Sin conexión con el Worker')})}
+  function pintaAdm(j){var al=document.getElementById('al'),a=j.errors||[];
+    al.innerHTML=a.length?a.map(function(x){return '<div class="e"><b>'+esc(x.msg)+'</b> <em>(×'+x.n+')</em><small>'+esc(x.page)+' · '+esc(x.file||'script en línea')+(x.line?':'+x.line:'')+' · '+esc(x.ua||'')+' · último: '+new Date(x.last_ts).toLocaleString()+'</small></div>'}).join(''):'<p>✅ Sin errores registrados.</p>'}
+  document.getElementById('ag').onclick=function(){adm({},pintaAdm)};
+  document.getElementById('ab').onclick=function(){if(confirm('¿Borrar todos los errores guardados en el servidor?'))adm({action:'clear'},function(){pintaAdm({errors:[]})})};
   document.getElementById('b').onclick=function(){try{localStorage.removeItem(K)}catch(e){}location.reload()};
   document.getElementById('c').onclick=function(){var t=a.map(function(x){return x.p+' | '+x.m+' | '+x.f+':'+x.l+' | '+new Date(x.t).toISOString()+(x.n>1?' x'+x.n:'')}).join('\n')||'Sin errores';
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){alert('Copiado')},function(){prompt('Copia esto:',t)})};

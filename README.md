@@ -15,6 +15,7 @@ Todos los archivos están en la raíz del repositorio (sin carpetas).
 - `neon-buggy.html` + `neon-buggy.css` + `neon-buggy-juego.js` / `-admin.js` / `-online.js` / `-extras.js` – Neón Buggy (se cargan en ese orden; comparten variables).
 - `seguridad.js` – claves de admin, Konami y trucos de Snake guardadas como hash; `generar-clave.html` crea hashes nuevos (uso local, no subir).
 - `registro-errores.js` – apunta los errores reales de JavaScript de cualquier página; `errores.html` los muestra (copiar/borrar).
+- `asistente.js` – chat de ayuda del hub (IA de Ekovozia, vía su Worker); se carga en `index.html`. Los avisos de errores también van a ese Worker (`registro-errores.js`).
 - `supabase-01…03-*.sql` – base de datos del modo online de Neón Buggy.
 
 ## Añadir un juego
