@@ -101,7 +101,11 @@ footer{margin-top:34px;text-align:center;color:var(--mut);font-size:12px}
 <script>
 (()=>{
 const $=id=>document.getElementById(id);
-const G=window.GAMES||[];
+const EXTRA=[
+{id:'football-legends',name:'Football Legends 3D',emoji:'⚽',colors:['#1f8a3a','#0b4d22'],tags:['Deportes','3D'],badge:'NUEVO',desc:'Fútbol 11 contra 11 en 3D: elige tu equipo, la alineación y el rival.',controls:'WASD mover · Shift correr · Espacio chutar · Q pase · E entrada (móvil: joystick y botones)'},
+{id:'aguja-pajar',name:'Aguja en el Pajar 3D',emoji:'🪡',colors:['#d9a93d','#8a5a12'],tags:['Aventura','3D'],badge:'NUEVO',desc:'Encuentra la aguja escondida en un enorme pajar, gana dinero y mejora tu equipo.',controls:'WASD o botones en pantalla · ratón o dedo para mirar · Menú para comprar'}];
+const BASE=window.GAMES||[];
+const G=[...BASE,...EXTRA.filter(x=>!BASE.some(g=>g.id===x.id))];
 const KEY='arcadehub.v1';
 let ST={fav:[],last:'',plays:{}};
 try{Object.assign(ST,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
